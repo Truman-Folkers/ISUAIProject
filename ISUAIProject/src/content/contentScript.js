@@ -1,3 +1,4 @@
+console.log("loaddded");
 const sidebar = document.createElement("div");
 sidebar.id = "ai-sidebar-root";
 sidebar.style.position = "fixed";
@@ -17,4 +18,4 @@ iframe.style.height = "100%";
 iframe.style.border = "none";
 
 sidebar.appendChild(iframe);
-console.log("loaddded")
+
