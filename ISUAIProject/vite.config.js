@@ -3,7 +3,6 @@ import react from "@vitejs/plugin-react";
 import { resolve } from "path";
 
 export default defineConfig({
-  publicDir: "public",
   plugins: [react()],
   build: {
     outDir: "dist",
@@ -11,7 +10,7 @@ export default defineConfig({
       input: {
         sidebar: resolve(__dirname, "src/sidebar/index.html"),
         content: resolve(__dirname, "src/content/contentScript.js"),
-        background: resolve(__dirname, "src/background/background.js"),
+        background: resolve(__dirname, "src/background/background.js")
       },
       output: {
         entryFileNames: "assets/[name].js",
