@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "Canvas AI Sidebar",
+  "name": "CyAI",
   "version": "1.0",
   "description": "AI-powered sidebar for Canvas LMS",
   "permissions": ["storage", "activeTab", "scripting"],
