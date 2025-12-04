@@ -1,11 +1,22 @@
 import "./sidebar.css";
+import { useState } from "react";
 
 export default function Sidebar(){
+    const [val, setVal] = useState("Ask Cy");
+    const click = () =>{
+        //python
+    }
+    const change = event => {
+        //do python
+        setVal(event.target.value);
+    }
+        
+
     return(
         <div className="sidebar-container">
       {/* Header */}
       <div className="sidebar-header">
-        <h2>Canvas AI</h2>
+        <h2>CyAI</h2>
       </div>
 
       {/* Content area */}
@@ -24,9 +35,13 @@ export default function Sidebar(){
         </div>
       </div>
 
+        <div className = "input-box">
+            <input className = "text-input" onChange = {change} value = {val}></input>
+            <button className = "input-button" onClick = {click}>Go</button>
+        </div>
       {/* Footer */}
       <div className="sidebar-footer">
-        <small>© 2025 Your Extension</small>
+        <small>© 2025 TruDesign LLC</small>
       </div>
     </div>
         
