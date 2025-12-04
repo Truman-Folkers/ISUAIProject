@@ -18,7 +18,7 @@
     {
       "matches": ["https://canvas.iastate.edu/*"],
       "resources": [
-        "sidebar.html",
+        "src/sidebar/index.html",
         "assets/*"
       ]
     }
