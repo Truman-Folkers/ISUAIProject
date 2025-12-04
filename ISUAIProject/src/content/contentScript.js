@@ -17,3 +17,4 @@ iframe.style.height = "100%";
 iframe.style.border = "none";
 
 sidebar.appendChild(iframe);
+console.log("loaddded")
