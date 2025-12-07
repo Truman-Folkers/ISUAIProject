@@ -40,7 +40,7 @@ export default function Chatbot() {
           onChange={(e) => setInput(e.target.value)} 
           onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         />
-        <button onClick={sendMessage}>Send</button>
+        <button onClick={sendMessage}>Go</button>
       </div>
     </div>
   );
