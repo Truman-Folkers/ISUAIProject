@@ -51,6 +51,38 @@
   box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
+
+.task-section {
+  margin-bottom: 20px;
+}
+
+.scan-btn {
+  padding: 8px 12px;
+  border-radius: 999px;
+  border: none;
+  background: #3b82f6;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 8px;
+}
+
+.scan-btn:hover {
+  background: #2563eb;
+}
+
+.task-list {
+  list-style: none;
+  padding-left: 0;
+}
+
+.task-list li {
+  padding: 6px 8px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+  background: #f5f5f5;
+}
+
 .input-box{
     font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     
