@@ -1,8 +1,13 @@
 import "./sidebar.css";
 import { useState } from "react";
+import Chatbot from "./chatbot.jsx";
+import Tasklist from "./tasklist.jsx";
+
 
 export default function Sidebar(){
     const [val, setVal] = useState("Ask Cy");
+    
+
     const click = () =>{
         //python
     }
@@ -10,7 +15,8 @@ export default function Sidebar(){
         //do python
         setVal(event.target.value);
     }
-        
+      
+
 
     return(
         <div className="sidebar-container">
@@ -57,10 +63,16 @@ export default function Sidebar(){
         </div>
       </div>
 
-        <div className = "input-box">
+      <Tasklist />
+
+      <Chatbot />
+
+
+
+        {/* <div className = "input-box">
             <input className = "text-input" onChange = {change} value = {val}></input>
             <button className = "input-button" onClick = {click}>Go</button>
-        </div>
+        </div> */}
       {/* Footer */}
       <div className="sidebar-footer">
         <small>© 2025 TruDesign LLC</small>
