@@ -5,17 +5,7 @@ import Tasklist from "./tasklist.jsx";
 
 
 export default function Sidebar(){
-    const [val, setVal] = useState("Ask Cy");
-    
 
-    const click = () =>{
-        //python
-    }
-    const change = event => {
-        //do python
-        setVal(event.target.value);
-    }
-      
 
 
     return(
