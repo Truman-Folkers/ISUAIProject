@@ -1,0 +1,79 @@
+/* REMOVE box styling — keep layout only */
+.chatbot {
+  display: flex;
+  flex-direction: column;
+  /* height: 100%; */
+}
+
+/* Messages area */
+.messages {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* User + Assistant bubble styles */
+.user {
+  text-align: right;
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #e6f0ff;
+  color: #0040a7;
+  display: inline-block;
+  max-width: 80%;
+}
+
+.assistant {
+  text-align: left;
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: #f5f5f5;
+  color: #333;
+  display: inline-block;
+  max-width: 80%;
+}
+
+/* Input area */
+.input-area {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* Input box */
+.input-area input {
+  flex: 1;
+  padding: 12px 14px;
+  border: 2px solid #d0d0d0;
+  border-radius: 999px;
+  font-size: 15px;
+  outline: none;
+  transition: 0.2s;
+}
+
+.input-area input:focus {
+  border-color: #3b82f6;
+  box-shadow: 0 0 5px rgba(59,130,246,0.4);
+}
+
+/* Send button */
+.input-area button {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 999px;
+  background: #3b82f6;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.input-area button:hover {
+  background: #2563eb;
+}
+
+.input-area button:active {
+  transform: scale(0.97);
+}
