@@ -19,16 +19,14 @@ export default function Sidebar(){
     return(
         // 2. Add the mouse event listeners here
         <div 
-            className={`sidebar-container ${isCollapsed ? 'collapsed' : ''}`}
-            onMouseEnter={onEnter}
-            onMouseLeave={onLeave}
+            className="sidebar-container"
         >
             {/* 3. Button is REMOVED. We don't need it anymore. */}
 
             <div className="sidebar-content-wrapper">
                 <div className="sidebar-header">
                     {/* Simplified header logic */}
-                    <h2>{isCollapsed ? '' : 'CyAI'}</h2>
+                    <h2>{'CyAI'}</h2>
                 </div>
 
       {/* Content area */}
@@ -47,10 +45,7 @@ export default function Sidebar(){
         </div>
       </div>
 
-        <div className = "input-box">
-            <input className = "text-input" onChange = {change} value = {val}></input>
-            <button className = "input-button" onClick = {click}>Go</button>
-        </div>
+        <Chatbot />
       {/* Footer */}
       <div className="sidebar-footer">
         <small>© 2025 TruDesign LLC</small>
