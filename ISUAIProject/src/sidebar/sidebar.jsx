@@ -6,6 +6,7 @@ import Tasklist from "./tasklist.jsx";
 
 export default function Sidebar(){
     const [val, setVal] = useState("Ask Cy");
+    const isCollapsed = false;
     const click = () =>{
         //python
     }
@@ -54,6 +55,7 @@ export default function Sidebar(){
       <div className="sidebar-footer">
         <small>© 2025 TruDesign LLC</small>
       </div>
+    </div>
     </div>
         
     )
