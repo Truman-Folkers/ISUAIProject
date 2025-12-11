@@ -5,7 +5,7 @@ import { askDevStral } from "../services/openrouter.js";
 
 export default function Chatbot() {
   const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hello! I'm DevStral AI. How can I help you today?" }
+    { role: "assistant", content: "Hello! I'm CyAI. How can I help you today?" }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
