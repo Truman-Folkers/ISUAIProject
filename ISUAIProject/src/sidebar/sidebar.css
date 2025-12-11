@@ -124,6 +124,11 @@ html, body, #root, .app-container {
     display: none; /* Add this line to prevent layout glitches */
 }
 
+.sidebar-container.collapsed .ChatBox{
+  opacity: 0;
+  display: none;
+}
+
 .text-input{
     border-radius: 25px;
     border: none;
