@@ -28,14 +28,16 @@ export default function Sidebar(){
 
     return(
         <div 
-            className="sidebar-container"
+            className={`sidebar-container ${isCollapsed ? 'collapsed' : ''}`}
+            onMouseEnter={onEnter}
+            onMouseLeave={onLeave}
         >
 
             <div className="sidebar-content-wrapper">
 
                 <div className="sidebar-header">
                     {/* Simplified header logic */}
-                    <h2>{'CyAI'}</h2>
+                    <h2>{isCollapsed ? '' : 'CyAI'}</h2>
                 </div>
 
                 <div className="sidebar-content">
