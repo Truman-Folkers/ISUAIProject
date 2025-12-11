@@ -1,16 +1,19 @@
 import "./sidebar.css";
 import { useState } from "react";
+import Chatbot from "./chatbot.jsx";
+import Tasklist from "./tasklist.jsx";
 
-// 1. Accept the new onEnter and onLeave props
-export default function Sidebar({ isCollapsed, onEnter, onLeave }){
+
+export default function Sidebar(){
     const [val, setVal] = useState("Ask Cy");
-
     const click = () =>{
-        console.log("Submit: " + val);
+        //python
     }
     const change = event => {
+        //do python
         setVal(event.target.value);
     }
+        
 
     return(
         // 2. Add the mouse event listeners here
@@ -27,23 +30,31 @@ export default function Sidebar({ isCollapsed, onEnter, onLeave }){
                     <h2>{isCollapsed ? '' : 'CyAI'}</h2>
                 </div>
 
-                <div className="sidebar-content">
-                    <p>Welcome to your AI-powered sidebar!</p>
-                    <div className="card">
-                        <h3>Tool 1</h3>
-                        <p>Quick description here.</p>
-                    </div>
-                </div>
+      {/* Content area */}
+      <div className="sidebar-content">
+        <p>Welcome to your AI-powered sidebar!</p>
+        <p>Use this space to display tools, suggestions, or controls.</p>
 
-                <div className="input-box">
-                    <input className="text-input" onChange={change} value={val}></input>
-                    <button className="input-button" onClick={click}>Go</button>
-                </div>
-
-                <div className="sidebar-footer">
-                    <small>© 2025 TruDesign LLC</small>
-                </div>
-            </div>
+        <div className="card">
+          <h3>Tool 1</h3>
+          <p>Quick description or action here.</p>
         </div>
+
+        <div className="card">
+          <h3>Tool 2</h3>
+          <p>Another tool description.</p>
+        </div>
+      </div>
+
+        <div className = "input-box">
+            <input className = "text-input" onChange = {change} value = {val}></input>
+            <button className = "input-button" onClick = {click}>Go</button>
+        </div>
+      {/* Footer */}
+      <div className="sidebar-footer">
+        <small>© 2025 TruDesign LLC</small>
+      </div>
+    </div>
+        
     )
 }

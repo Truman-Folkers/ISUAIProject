@@ -4,7 +4,7 @@ sidebar.id = "ai-sidebar-root";
 sidebar.style.position = "fixed";
 sidebar.style.top = "0";
 sidebar.style.right = "0";
-sidebar.style.width = "350px";
+sidebar.style.width = "450px";
 sidebar.style.height = "100vh";
 sidebar.style.zIndex = "999999";
 
