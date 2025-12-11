@@ -1,79 +1,179 @@
-/* REMOVE box styling — keep layout only */
+/* src/components/chatbot.css - UPDATED */
 .chatbot {
+  width: 100%;
+  height: 30%;
   display: flex;
   flex-direction: column;
-  /* height: 100%; */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: white;
 }
 
-/* Messages area */
+/* Container that pushes messages to bottom */
+.messages-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
 .messages {
   flex: 1;
   overflow-y: auto;
-  padding-right: 4px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  /* This makes messages start from bottom */
+  justify-content: flex-end;
+  min-height: 0; /* Important for flex scrolling */
 }
 
-/* User + Assistant bubble styles */
-.user {
-  text-align: right;
-  margin: 8px 0;
-  padding: 8px 12px;
-  border-radius: 12px;
-  background: #e6f0ff;
-  color: #0040a7;
-  display: inline-block;
-  max-width: 80%;
+.message {
+  max-width: 85%;
+  padding: 10px 14px;
+  border-radius: 18px;
+  line-height: 1.4;
+  word-wrap: break-word;
+  animation: fadeIn 0.3s ease;
 }
 
-.assistant {
-  text-align: left;
-  margin: 8px 0;
-  padding: 8px 12px;
-  border-radius: 12px;
-  background: #f5f5f5;
-  color: #333;
-  display: inline-block;
-  max-width: 80%;
+.message.user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%);
+  color: white;
+  border-bottom-right-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.3);
 }
 
-/* Input area */
+.message.assistant {
+  align-self: flex-start;
+  background: #F2F2F7;
+  color: #1C1C1E;
+  border-bottom-left-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.message-content {
+  white-space: pre-wrap;
+}
+
+/* Error message styling */
+.message.assistant .message-content:contains("⚠️") {
+  color: #FF3B30;
+}
+
+.typing {
+  display: flex;
+  gap: 4px;
+  padding: 8px 0;
+  align-items: center;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #8E8E93;
+  animation: blink 1.4s infinite both;
+}
+
+.dot:nth-child(2) { animation-delay: 0.2s; }
+.dot:nth-child(3) { animation-delay: 0.4s; }
+
 .input-area {
   display: flex;
-  gap: 10px;
-  margin-top: 10px;
+  gap: 8px;
+  padding: 16px;
+  border-top: 1px solid #E5E5EA;
+  background: white;
+  position: sticky;
+  bottom: 0;
 }
 
-/* Input box */
 .input-area input {
   flex: 1;
-  padding: 12px 14px;
-  border: 2px solid #d0d0d0;
-  border-radius: 999px;
-  font-size: 15px;
+  padding: 12px 16px;
+  border: 1px solid #C7C7CC;
+  border-radius: 20px;
+  font-size: 16px;
   outline: none;
-  transition: 0.2s;
+  transition: all 0.2s;
+  background: #F2F2F7;
 }
 
 .input-area input:focus {
-  border-color: #3b82f6;
-  box-shadow: 0 0 5px rgba(59,130,246,0.4);
+  border-color: #007AFF;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
 }
 
-/* Send button */
-.input-area button {
-  padding: 12px 20px;
-  border: none;
-  border-radius: 999px;
-  background: #3b82f6;
+.input-area input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.send-button {
+  width: 44px;
+  height: 44px;
+  border-radius: 22px;
+  background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%);
   color: white;
+  border: none;
+  font-size: 18px;
   font-weight: 600;
   cursor: pointer;
-  transition: 0.2s;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.input-area button:hover {
-  background: #2563eb;
+.send-button:hover:not(:disabled) {
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
 }
 
-.input-area button:active {
-  transform: scale(0.97);
+.send-button:active:not(:disabled) {
+  transform: scale(0.95);
+}
+
+.send-button:disabled {
+  background: #C7C7CC;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Custom scrollbar */
+.messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.messages::-webkit-scrollbar-thumb {
+  background: #C7C7CC;
+  border-radius: 3px;
+}
+
+.messages::-webkit-scrollbar-thumb:hover {
+  background: #8E8E93;
+}
+
+@keyframes fadeIn {
+  from { 
+    opacity: 0; 
+    transform: translateY(8px); 
+  }
+  to { 
+    opacity: 1; 
+    transform: translateY(0); 
+  }
+}
+
+@keyframes blink {
+  0%, 80%, 100% { opacity: 0.3; }
+  40% { opacity: 1; }
 }
