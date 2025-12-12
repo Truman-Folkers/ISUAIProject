@@ -97,10 +97,8 @@ html, body, #root, .app-container {
   gap: 0;
 }
 
-.sidebar-container.collapsed .ChatBot {
-  opacity: 0;
-    pointer-events: none;
-    display: none;
+.sidebar-container.collapsed{
+  font-size: 0;
 }
 
 /* Card style */
