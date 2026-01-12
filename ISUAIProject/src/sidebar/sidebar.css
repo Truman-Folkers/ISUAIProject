@@ -224,11 +224,11 @@ html, body, #root, .app-container {
 
 .left-side{
   width: 60%;
-  align: left;
+  align-items: left;
 }
 
 .right-side{
   width: 40%;
-  align: right;
+  align-items: right;
 }
 
