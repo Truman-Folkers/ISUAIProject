@@ -59,7 +59,8 @@ html, body, #root, .app-container {
 /* Header */
 .sidebar-header {
   padding: 16px;
-  border-radius: 25px;
+  border-top-left-radius: 25px;
+  border-top-right-radius: 25px;
   background-color: red;
   color: white;
   text-align: center;
@@ -203,3 +204,31 @@ html, body, #root, .app-container {
     width: 70%; /* Use % so it fits inside the parent 350px container */
     padding: 8px;
 }
+
+.table {
+  width: 60%;
+  height: 15px;
+  margin: 20px;
+}
+
+.table th, .table td{
+  border: 1px solid black;
+  padding: 5px;
+  text-align: center;
+}
+
+.separator{
+  display: flex;
+  gap: 0%;
+}
+
+.left-side{
+  width: 60%;
+  align: left;
+}
+
+.right-side{
+  width: 40%;
+  align: right;
+}
+

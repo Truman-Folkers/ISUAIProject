@@ -44,16 +44,38 @@ export default function Sidebar(){
                     <p>Welcome to your AI-powered sidebar!</p>
                     <p>Use this space to display tools, suggestions, or controls.</p>
 
-                    <div className="card">
-                        <h3>Tool 1</h3>
-                        <p>Quick description or action here.</p>
+                    <div className="separator">
+                    <div className="left-side">
+                    <div className="table">
+                        <thead>
+                            <tr>
+                                <th>Upcoming Assignments</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <th>Assignment 1</th>
+                            </tr>
+                        </tbody>
+                        <tbody>
+                            <tr>
+                                <th>Assignment 2</th>
+                            </tr>
+                        </tbody>
                     </div>
-
+                    </div>
+                    <div className="right-side">
+                    <div className="card">  
+                        <h3>Tool 1</h3>
+                        <p>Temporary description</p>
+                    </div>
                     <div className="card">
                         <h3>Tool 2</h3>
-                        <p>Another tool description.</p>
+                        <p>Another description</p>
                     </div>
                 </div>
+            </div>
+        </div>
 
         <Chatbot />
       {/* Footer */}
