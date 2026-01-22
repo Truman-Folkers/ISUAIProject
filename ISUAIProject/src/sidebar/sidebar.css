@@ -16,7 +16,8 @@ html, body, #root, .app-container {
   position: fixed;       /* stick to page */
   top: 0;
   right: 0;
-  border-radius: 25px;
+  border-top-left-radius: 25px;
+  border-bottom-left-radius: 25px;
   width: 34vh;          /* adjust as needed */
   height: 100vh;         /* full viewport height */
   background:  rgb(255, 255, 250);
@@ -60,7 +61,6 @@ html, body, #root, .app-container {
 .sidebar-header {
   padding: 16px;
   border-top-left-radius: 25px;
-  border-top-right-radius: 25px;
   background-color: red;
   color: white;
   text-align: center;
