@@ -31,33 +31,25 @@ export default function Sidebar(){
 const generateTodos = async () => {
   setLoading(true);
 
-  const [tab] = await chrome.tabs.query({
-    active: true,
-    currentWindow: true
-  });
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
 
-  // 1️⃣ Ask content script to scrape
-  chrome.tabs.sendMessage(tab.id, { type: "SCRAPE_PAGE" }, (scrapeResponse) => {
-    if (chrome.runtime.lastError || !scrapeResponse?.success) {
-      console.error("Scrape failed", chrome.runtime.lastError || scrapeResponse);
+  chrome.tabs.sendMessage(tab.id, { type: "SCRAPE_PAGE" }, (resp) => {
+    if (chrome.runtime.lastError) {
+      console.error(chrome.runtime.lastError);
       setLoading(false);
       return;
     }
 
-    // 2️⃣ Send scraped data to background for AI processing
-    chrome.runtime.sendMessage(
-      { type: "SEND_TO_AI", payload: scrapeResponse.data },
-      (aiTodos) => {
-        if (chrome.runtime.lastError) {
-          console.error("AI failed", chrome.runtime.lastError);
-          setLoading(false);
-          return;
-        }
+    if (!resp?.success) {
+      console.error("Scrape failed:", resp?.error || resp);
+      setTodos([]);
+      setLoading(false);
+      return;
+    }
 
-        setTodos(aiTodos);
-        setLoading(false);
-      }
-    );
+    // Directly display scraped Canvas items
+    setTodos(resp.data);
+    setLoading(false);
   });
 };
 
@@ -111,23 +103,36 @@ const generateTodos = async () => {
                             <table>
                             <thead>
                                 <tr>
-                                <th>Task</th>
+                                <th>Title</th>
+                                <th>Course</th>
                                 <th>Due</th>
-                                <th>Priority</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {todos.map((todo, i) => (
+                                {todos.map((t, i) => (
                                 <tr key={i}>
-                                    <td>{todo.task}</td>
-                                    <td>{todo.due_date}</td>
-                                    <td>{todo.priority}</td>
+                                    <td>
+                                    {t.url ? (
+                                        <a href={t.url} target="_blank" rel="noreferrer">
+                                        {t.title}
+                                        </a>
+                                    ) : (
+                                        t.title
+                                    )}
+                                    </td>
+                                    <td>{t.course}</td>
+                                    <td>{t.due_text}</td>
                                 </tr>
                                 ))}
                             </tbody>
                             </table>
                         )}
+
+                        {!loading && todos.length === 0 && (
+                            <p>No To Do items found on this page.</p>
+                        )}
                     </div>
+
 
                     </div>
                     

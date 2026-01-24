@@ -24,29 +24,57 @@ console.log("Iframe element:", iframe);
 
 console.log("CyAI content script loaded");
 
-function scrapeAssignments() {
-  const nodes = document.querySelectorAll(".assignment");
+console.log("CyAI content script loaded");
 
-  if (!nodes.length) {
-    console.warn("No assignments found on page");
-  }
+function scrapeCanvasTodoSidebar() {
+  const list = document.querySelector("#planner-todosidebar-item-list");
+  if (!list) return [];
 
-  return [...nodes].map(el => ({
-    title: el.innerText.trim(),
-    due: el.querySelector(".due")?.innerText?.trim() || null
-  }));
+  const items = [...list.querySelectorAll("li")];
+
+  return items
+    .map((li) => {
+      const root = li.querySelector(".ToDoSidebarItem") || li;
+
+      const titleLink =
+        root.querySelector(".ToDoSidebarItem__Title a") ||
+        root.querySelector('[data-testid="todo-sidebar-item-title"] a') ||
+        root.querySelector("a");
+
+      const title =
+        titleLink?.querySelector("span")?.innerText?.trim() ||
+        titleLink?.innerText?.trim() ||
+        null;
+
+      const href = titleLink?.getAttribute("href") || null;
+      const url = href ? new URL(href, window.location.origin).toString() : null;
+
+      const course =
+        root.querySelector(".ToDoSidebarItem__Info > span")?.innerText?.trim() ||
+        null;
+
+      const infoRow =
+        root.querySelector('[data-testid="ToDoSidebarItem__InformationRow"]') ||
+        root.querySelector(".ToDoSidebarItem__InformationRow");
+
+      const due_text = infoRow?.innerText?.trim() || null;
+
+      if (!title && !course && !due_text) return null;
+
+      return { title, course, due_text, url };
+    })
+    .filter(Boolean);
 }
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (msg.type === "SCRAPE_PAGE") {
     try {
-      const data = scrapeAssignments();
+      const data = scrapeCanvasTodoSidebar();
       sendResponse({ success: true, data });
     } catch (err) {
       console.error("Scrape failed:", err);
-      sendResponse({ success: false, error: err.message });
+      sendResponse({ success: false, error: err?.message || String(err) });
     }
-
     return true;
   }
 });
