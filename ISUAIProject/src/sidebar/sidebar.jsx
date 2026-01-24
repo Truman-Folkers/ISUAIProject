@@ -96,6 +96,7 @@ const generateTodos = async () => {
                         {loading ? "Working…" : "Generate To-Do"}
                     </button>
 
+                    <h4 className = "todo-header">Top 5 To-Do Items</h4>
                     <div className="table">
                         {loading && <p>Generating…</p>}
 
@@ -109,7 +110,7 @@ const generateTodos = async () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {todos.map((t, i) => (
+                                {todos.slice(0,5).map((t, i) => (
                                 <tr key={i}>
                                     <td>
                                     {t.url ? (
