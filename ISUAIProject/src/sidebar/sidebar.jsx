@@ -25,21 +25,41 @@ export default function Sidebar(){
         // do python
         setVal(event.target.value);
     }
+    const [todos, setTodos] = useState([]);
+    const [loading, setLoading] = useState(false);
 
-    function renderTodos(todos) {
-    const tbody = document.querySelector("tbody");
-    tbody.innerHTML = "";
+const generateTodos = async () => {
+  setLoading(true);
 
-    todos.forEach(todo => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-        <td>${todo.task}</td>
-        <td>${todo.due_date}</td>
-        <td>${todo.priority}</td>
-        `;
-        tbody.appendChild(row);
-    });
-}
+  const [tab] = await chrome.tabs.query({
+    active: true,
+    currentWindow: true
+  });
+
+  // 1️⃣ Ask content script to scrape
+  chrome.tabs.sendMessage(tab.id, { type: "SCRAPE_PAGE" }, (scrapeResponse) => {
+    if (chrome.runtime.lastError || !scrapeResponse?.success) {
+      console.error("Scrape failed", chrome.runtime.lastError || scrapeResponse);
+      setLoading(false);
+      return;
+    }
+
+    // 2️⃣ Send scraped data to background for AI processing
+    chrome.runtime.sendMessage(
+      { type: "SEND_TO_AI", payload: scrapeResponse.data },
+      (aiTodos) => {
+        if (chrome.runtime.lastError) {
+          console.error("AI failed", chrome.runtime.lastError);
+          setLoading(false);
+          return;
+        }
+
+        setTodos(aiTodos);
+        setLoading(false);
+      }
+    );
+  });
+};
 
 
     return(
@@ -80,7 +100,35 @@ export default function Sidebar(){
                         </tbody>
                     </div>
                     </div> */}
-                    renderTodos();
+                    <button onClick={generateTodos} disabled={loading}>
+                        {loading ? "Working…" : "Generate To-Do"}
+                    </button>
+
+                    <div className="table">
+                        {loading && <p>Generating…</p>}
+
+                        {!loading && todos.length > 0 && (
+                            <table>
+                            <thead>
+                                <tr>
+                                <th>Task</th>
+                                <th>Due</th>
+                                <th>Priority</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {todos.map((todo, i) => (
+                                <tr key={i}>
+                                    <td>{todo.task}</td>
+                                    <td>{todo.due_date}</td>
+                                    <td>{todo.priority}</td>
+                                </tr>
+                                ))}
+                            </tbody>
+                            </table>
+                        )}
+                    </div>
+
                     </div>
                     
 
