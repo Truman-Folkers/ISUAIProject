@@ -233,3 +233,26 @@ html, body, #root, .app-container {
   align-items: right;
 }
 
+.generate-button{
+  background-color: rgb(206, 29, 29);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  padding: 10px 20px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.to-do-header{
+  margin-top: 20px;
+  font-size: 18px;
+  font-weight: bold;
+  text-align: center;
+  margin-left: 20%;
+}
+
+.table li a{
+  text-decoration: none;
+  color: black;
+}

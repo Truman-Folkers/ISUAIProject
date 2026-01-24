@@ -92,7 +92,7 @@ const generateTodos = async () => {
                         </tbody>
                     </div>
                     </div> */}
-                    <button onClick={generateTodos} disabled={loading}>
+                    <button className = "generate-button" onClick={generateTodos} disabled={loading}>
                         {loading ? "Working…" : "Generate To-Do"}
                     </button>
 
