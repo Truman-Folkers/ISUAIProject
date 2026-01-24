@@ -70,8 +70,8 @@ const generateTodos = async () => {
                 </div>
 
                 <div className="sidebar-content">
-                    <p>Welcome to your AI-powered sidebar!</p>
-                    <p>Use this space to display tools, suggestions, or controls.</p>
+                    <p>Welcome to CyAI!</p>
+                    <p>Use this sidebar to ask questions, see your To-Do list, or take a shortcut to your class webpages!</p>
 
                     <div className="separator">
                     <div className="left-side">
