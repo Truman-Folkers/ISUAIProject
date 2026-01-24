@@ -115,7 +115,7 @@ const generateTodos = async () => {
                                 <tr key={i}>
                                     <td>
                                     {t.url ? (
-                                        <a href={t.url} target="_blank" rel="noreferrer">
+                                        <a className = "todo-link" href={t.url} target="_blank" rel="noreferrer">
                                         {t.title}
                                         </a>
                                     ) : (

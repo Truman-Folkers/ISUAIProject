@@ -233,6 +233,18 @@ html, body, #root, .app-container {
   align-items: right;
 }
 
+.todo-header{
+  font-weight: bold;
+  font-size: 18px;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+.todo-link{
+  text-decoration: none;
+  color: blue;
+}
+
 /* Header flex layout for title and toggle */
 .header-flex {
   display: flex;
