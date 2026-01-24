@@ -212,7 +212,8 @@ html, body, #root, .app-container {
 }
 
 .table th, .table td{
-  border: 1px solid black;
+  border: none;
+  border-bottom: black 1px solid;
   padding: 5px;
   text-align: center;
 }
