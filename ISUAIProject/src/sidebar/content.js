@@ -1,3 +1,5 @@
+console.log("CyAI content script loaded");
+
 function scrapeAssignments() {
   const nodes = document.querySelectorAll(".assignment");
 

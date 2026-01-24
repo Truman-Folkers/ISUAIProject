@@ -4,14 +4,15 @@
   "version": "1.0",
   "description": "AI-powered sidebar for Canvas LMS",
   "permissions": ["storage", "activeTab", "scripting"],
-  "host_permissions": ["https://canvas.iastate.edu/*"],
+  "host_permissions": ["https://canvas.iastate.edu/*", "<all_urls>"],
   "background": {
     "service_worker": "assets/background.js"
   },
   "content_scripts": [
     {
-      "matches": ["https://canvas.iastate.edu/*"],
-      "js": ["assets/content.js"]
+      "matches": ["https://canvas.iastate.edu/*", "<all_urls>"],
+      "js": ["assets/content.js"],
+      "run_at": "document_idle"
     }
   ],
   "web_accessible_resources": [
