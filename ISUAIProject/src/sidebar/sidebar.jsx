@@ -26,6 +26,22 @@ export default function Sidebar(){
         setVal(event.target.value);
     }
 
+    function renderTodos(todos) {
+    const tbody = document.querySelector("tbody");
+    tbody.innerHTML = "";
+
+    todos.forEach(todo => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+        <td>${todo.task}</td>
+        <td>${todo.due_date}</td>
+        <td>${todo.priority}</td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+
     return(
         <div 
             className={`sidebar-container ${isCollapsed ? 'collapsed' : ''}`}
@@ -46,7 +62,7 @@ export default function Sidebar(){
 
                     <div className="separator">
                     <div className="left-side">
-                    <div className="table">
+                    {/* <div className="table">
                         <thead>
                             <tr>
                                 <th>Upcoming Assignments</th>
@@ -63,7 +79,11 @@ export default function Sidebar(){
                             </tr>
                         </tbody>
                     </div>
+                    </div> */}
+                    renderTodos();
                     </div>
+                    
+
                     <div className="right-side">
                     <div className="card">  
                         <h3>Tool 1</h3>

@@ -1,12 +1,12 @@
 // Reads all visible text from the page
 function readPageText() {
-  return document.body.innerText;
+    return [...document.querySelectorAll(".assignment")].map(a => ({
+    title: a.innerText,
+    due: a.querySelector(".due")?.innerText ?? null
+  }));
 }
 
-// Listen for messages from popup
-chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
-  if (msg.action === "readPage") {
-    const text = readPageText();
-    sendResponse({ text });
-  }
+chrome.runtime.sendMessage({
+  type: "SCRAPED_DATA",
+  payload: readPageText()
 });

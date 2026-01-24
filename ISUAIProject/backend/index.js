@@ -38,3 +38,27 @@ app.post("/api/chat", async (req, res) => {
 app.listen(3000, () => {
   console.log("Backend running on http://localhost:3000");
 });
+
+
+app.post("/ai/todo", async (req, res) => {
+  const scrapedData = req.body;
+
+  const prompt = `
+You are an academic assistant.
+Turn the following scraped course data into a prioritized to-do list.
+Include:
+- Task
+- Due date
+- Priority (High/Medium/Low)
+
+Data:
+${JSON.stringify(scrapedData, null, 2)}
+`;
+
+  const aiResponse = await openai.chat.completions.create({
+    model: "gpt-4.1-mini",
+    messages: [{ role: "user", content: prompt }]
+  });
+
+  res.json(JSON.parse(aiResponse.choices[0].message.content));
+});

@@ -9,3 +9,18 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 // No message listeners needed for direct API calls
+
+// background.js
+chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  if (msg.type === "SCRAPED_DATA") {
+    fetch("https://your-backend.com/ai/todo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(msg.payload)
+    })
+      .then(res => res.json())
+      .then(data => sendResponse(data));
+  }
+
+  return true; // async
+});
