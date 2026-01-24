@@ -5,6 +5,7 @@ import "./sidebar.css";
 export default function App() {
   // 1. Default to TRUE so it starts collapsed
   const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(false);
 
   // 2. Define specific handlers for hover
   const handleMouseEnter = () => {
@@ -16,11 +17,13 @@ export default function App() {
   };
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${isDarkMode ? 'dark-mode' : ''}`}>
       <Sidebar 
         isCollapsed={isCollapsed} 
         onEnter={handleMouseEnter} 
-        onLeave={handleMouseLeave} 
+        onLeave={handleMouseLeave}
+        isDarkMode={isDarkMode}
+        setIsDarkMode={setIsDarkMode}
       />
     </div>
   );

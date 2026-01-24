@@ -3,19 +3,9 @@ import { useState } from "react";
 import Chatbot from "./chatbot.jsx";
 import Tasklist from "./tasklist.jsx";
 
-export default function Sidebar(){
+export default function Sidebar({ isCollapsed, onEnter, onLeave, isDarkMode, setIsDarkMode }){
 
     const [val, setVal] = useState("Ask Cy");
-
-    const [isCollapsed, setIsCollapsed] = useState(true);
-
-    const onEnter = () => {
-        setIsCollapsed(false);
-    }
-
-    const onLeave = () => {
-        setIsCollapsed(true);
-    }
 
     const click = () => {
         // python
@@ -54,9 +44,13 @@ const generateTodos = async () => {
 };
 
 
+    const toggleDarkMode = () => {
+        setIsDarkMode(!isDarkMode);
+    }
+
     return(
         <div 
-            className={`sidebar-container ${isCollapsed ? 'collapsed' : ''}`}
+            className={`sidebar-container ${isCollapsed ? 'collapsed' : ''} ${isDarkMode ? 'dark-mode' : ''}`}
             onMouseEnter={onEnter}
             onMouseLeave={onLeave}
         >
@@ -65,7 +59,14 @@ const generateTodos = async () => {
 
                 <div className="sidebar-header">
                     {/* Simplified header logic */}
-                    <h2>{isCollapsed ? '' : 'CyAI'}</h2>
+                    <div className="header-flex">
+                        <h2>{isCollapsed ? '' : 'CyAI'}</h2>
+                        {!isCollapsed && (
+                            <button className="dark-mode-toggle" onClick={toggleDarkMode} title="Toggle dark mode">
+                                {isDarkMode ? '☀️' : '🌙'}
+                            </button>
+                        )}
+                    </div>
                 </div>
 
                 <div className="sidebar-content">
