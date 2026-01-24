@@ -3,6 +3,10 @@
   margin-bottom: 20px;
 }
 
+.task-section h3 {
+  margin-top: 0;
+}
+
 .scan-btn {
   padding: 8px 12px;
   border-radius: 999px;
@@ -28,4 +32,26 @@
   border-radius: 8px;
   margin-bottom: 4px;
   background: #f5f5f5;
+}
+
+/* Dark mode styles for task list */
+.sidebar-container.dark-mode .task-section h3 {
+  color: #e0e0e0;
+}
+
+.sidebar-container.dark-mode .scan-btn {
+  background: #cc0000;
+}
+
+.sidebar-container.dark-mode .scan-btn:hover {
+  background: #ff3333;
+}
+
+.sidebar-container.dark-mode .task-list li {
+  background: #2a2a2a;
+  color: #e0e0e0;
+}
+
+.sidebar-container.dark-mode .task-list li:hover {
+  background: #323232;
 }
