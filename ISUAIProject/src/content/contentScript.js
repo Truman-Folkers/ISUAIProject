@@ -1,4 +1,4 @@
-console.log("CyAI content script loaded");
+console.log("CyAI contentScript.js loaded");
 
 /* =========================
    Sidebar Injection
