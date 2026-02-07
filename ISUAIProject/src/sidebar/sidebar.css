@@ -102,19 +102,7 @@ html, body, #root, .app-container {
   font-size: 0;
 }
 
-/* Card style */
-.card {
-  background-color: white;
-  border-radius: 8px;
-  padding: 12px 16px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
+/* Card style - REMOVED */
 
 .input-box{
     font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -220,17 +208,19 @@ html, body, #root, .app-container {
 
 .separator{
   display: flex;
-  gap: 0%;
+  gap: 10px;
+  align-items: flex-start;
 }
 
 .left-side{
-  width: 60%;
+  flex: 1;
   align-items: left;
 }
 
 .right-side{
-  width: 40%;
+  width: auto;
   align-items: right;
+  min-width: 120px;
 }
 
 .todo-header{
@@ -307,20 +297,7 @@ html, body, #root, .app-container {
   color: #b0b0b0;
 }
 
-.sidebar-container.dark-mode .card {
-  background-color: #2a2a2a;
-  color: #e0e0e0;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
-
-.sidebar-container.dark-mode .card:hover {
-  background-color: #323232;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
-}
-
-.sidebar-container.dark-mode .card h3 {
-  color: #e0e0e0;
-}
+/* Dark mode .card styles - REMOVED */
 
 .sidebar-container.dark-mode .card p {
   color: #b0b0b0;
