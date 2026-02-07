@@ -193,8 +193,9 @@ html, body, #root, .app-container {
     padding: 8px;
 }
 
+/*--------------------------------------------*/
 .table {
-  width: 60%;
+  width: 30 vw;
   height: 15px;
   margin: 20px;
 }
@@ -220,7 +221,6 @@ html, body, #root, .app-container {
 .right-side{
   width: auto;
   align-items: right;
-  min-width: 120px;
 }
 
 .todo-header{
@@ -232,8 +232,82 @@ html, body, #root, .app-container {
 
 .todo-link{
   text-decoration: none;
-  color: blue;
+  color: black;
 }
+
+/* Card container */
+.todo-card {
+  max-width: 100%;
+  background: #fafafa;
+  border-radius: 14px;
+  padding: 0.75rem 0.75rem 0.5rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+  overflow: hidden; /* prevents spillover */
+}
+
+/* Header */
+.todo-header {
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #111;
+}
+
+/* Table */
+.todo-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed; /* KEY: prevents overflow */
+  font-size: 0.9rem;
+}
+
+.todo-table th {
+  text-align: left;
+  font-weight: 500;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #666;
+  padding-bottom: 0.4rem;
+}
+
+.todo-table td {
+  padding: 0.55rem 0.4rem;
+  vertical-align: top;
+}
+
+/* Row separation */
+.todo-table tr:not(:last-child) {
+  border-bottom: 1px solid #e6e6e6;
+}
+
+/* Title */
+.todo-title a {
+  color: #000000;
+  font-weight: 500;
+  text-decoration: none;
+  display: block;
+  word-wrap: break-word;
+}
+
+.todo-title a:hover {
+  text-decoration: underline;
+}
+
+/* Course (de-emphasized) */
+.todo-course {
+  color: #555;
+  font-size: 0.8rem;
+  word-wrap: break-word;
+}
+
+/* Due date */
+.todo-due {
+  font-weight: 500;
+  font-size: 0.8rem;
+  color: #b45309;
+  /* white-space: nowrap; keeps date tidy */
+}
+/*--------------------------------------------*/
 
 /* Header flex layout for title and toggle */
 .header-flex {
@@ -297,7 +371,12 @@ html, body, #root, .app-container {
   color: #b0b0b0;
 }
 
-/* Dark mode .card styles - REMOVED */
+.sidebar-container.dark-mode .todo-card {
+  background: #2a2a2a;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
+
 
 .sidebar-container.dark-mode .card p {
   color: #b0b0b0;

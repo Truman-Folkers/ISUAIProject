@@ -412,45 +412,45 @@ ${syllabusText}`;
                                 </button>
                             )}
 
-                            {!isCoursePage && (
-                                <h4 className = "todo-header">Top 5 To-Do Items</h4>
+                    <div className = {`todo-card  ${isDarkMode ? 'dark-mode' : ''}`}>
+                        <h4 className = "todo-header">Top 5 To-Do Items</h4>
+                        <div className="todo-table">
+                            {loading && <p>Generating…</p>}
+
+                            {!loading && todos.length > 0 && (
+                                <table>
+                                <thead>
+                                    <tr>
+                                    <th>Title</th>
+                                    <th>Course</th>
+                                    <th>Due</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {todos.slice(0,5).map((t, i) => (
+                                    <tr key={i}>
+                                        <td className = "todo-title">
+                                        {t.url ? (
+                                            <a className = "todo-link" href={t.url} target="_blank" rel="noreferrer">
+                                            {t.title}
+                                            </a>
+                                        ) : (
+                                            t.title
+                                        )}
+                                        </td>
+                                        <td className = "todo-course">{t.course}</td>
+                                        <td className = "todo-due">{t.due_text}</td>
+                                    </tr>
+                                    ))}
+                                </tbody>
+                                </table>
                             )}
-                            <div className="table">
-                                {loading && <p>Generating…</p>}
 
-                                {!loading && todos.length > 0 && (
-                                    <table>
-                                    <thead>
-                                        <tr>
-                                        <th>Title</th>
-                                        <th>Course</th>
-                                        <th>Due</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {todos.slice(0,5).map((t, i) => (
-                                        <tr key={i}>
-                                            <td>
-                                            {t.url ? (
-                                                <a className = "todo-link" href={t.url} target="_blank" rel="noreferrer">
-                                                {t.title}
-                                                </a>
-                                            ) : (
-                                                t.title
-                                            )}
-                                            </td>
-                                            <td>{t.course}</td>
-                                            <td>{t.due_text}</td>
-                                        </tr>
-                                        ))}
-                                    </tbody>
-                                    </table>
-                                )}
-
-                                {!loading && todos.length === 0 && !isCoursePage && (
-                                    <p>No To Do items found on this page.</p>
-                                )}
-                            </div>
+                            {!loading && todos.length === 0 && (
+                                <p>No To Do items found on this page.</p>
+                            )}
+                        </div>
+                    </div>
 
 
                             </div>

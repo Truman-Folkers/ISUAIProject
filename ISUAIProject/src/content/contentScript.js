@@ -1,4 +1,9 @@
-console.log("loaddded");
+console.log("CyAI contentScript.js loaded");
+
+/* =========================
+   Sidebar Injection
+========================= */
+
 const sidebar = document.createElement("div");
 sidebar.id = "ai-sidebar-root";
 sidebar.style.position = "fixed";
@@ -11,57 +16,27 @@ sidebar.style.borderBottomLeftRadius = "25px";
 sidebar.style.zIndex = "999999";
 sidebar.style.transition = "width 0.3s ease-in-out, box-shadow 0.3s ease-in-out";
 sidebar.style.boxShadow = "0px 0 10px rgba(0, 0, 0, 0.15)";
-sidebar.addEventListener('mouseover', function(event){
-    sidebar.style.width = "34vh";
-})
-sidebar.addEventListener('mouseout', function(event){
-    sidebar.style.width = "50px";
-})
 
-// Test if this script is actually running
-window.__cyaiLoaded = true;
-console.log("✅ CyAI content script STARTED - window.__cyaiLoaded =", window.__cyaiLoaded);
-
-// Wait for DOM to be ready before creating sidebar
-function initSidebar() {
-  console.log("✅ Initializing sidebar...");
-  
-  const sidebar = document.createElement("div");
-  sidebar.id = "ai-sidebar-root";
-  sidebar.style.position = "fixed";
-  sidebar.style.top = "0";
-  sidebar.style.right = "0";
-  sidebar.style.width = "450px";
-  sidebar.style.height = "100vh";
-  sidebar.style.zIndex = "999999";
+sidebar.addEventListener("mouseenter", () => {
+  sidebar.style.width = "34vh";
+});
+sidebar.addEventListener("mouseleave", () => {
+  sidebar.style.width = "50px";
+});
 
   document.body.appendChild(sidebar);
 
-  // Load the React sidebar app
-  const iframe = document.createElement("iframe");
-  iframe.src = chrome.runtime.getURL("src/sidebar/index.html");
-  iframe.style.width = "100%";
-  iframe.style.height = "100%";
-  iframe.style.border = "none";
+const iframe = document.createElement("iframe");
+iframe.src = chrome.runtime.getURL("src/sidebar/index.html");
+iframe.style.width = "100%";
+iframe.style.height = "100%";
+iframe.style.border = "none";
 
-  sidebar.appendChild(iframe);
-  console.log("✅ Sidebar container added");
-  
-  // Apply saved hidden courses to dashboard on page load
-  chrome.storage.sync.get("hiddenCourses", (data) => {
-    if (data.hiddenCourses && Object.keys(data.hiddenCourses).length > 0) {
-      console.log("🔄 Applying saved hidden courses on page load:", data.hiddenCourses);
-      applyDashboardCourseVisibility(data.hiddenCourses);
-    }
-  });
-}
+sidebar.appendChild(iframe);
 
-// Make sure DOM is ready
-if (document.body) {
-  initSidebar();
-} else {
-  document.addEventListener("DOMContentLoaded", initSidebar);
-}
+/* =========================
+   Canvas To-Do Scraper
+========================= */
 
 function scrapeCanvasTodoSidebar() {
   const list = document.querySelector("#planner-todosidebar-item-list");
@@ -73,18 +48,25 @@ function scrapeCanvasTodoSidebar() {
     .map((li) => {
       const root = li.querySelector(".ToDoSidebarItem") || li;
 
+      // ❌ Skip announcements
+      if (root.querySelector('svg[label="Announcement"]')) return null;
+
       const titleLink =
         root.querySelector(".ToDoSidebarItem__Title a") ||
-        root.querySelector('[data-testid="todo-sidebar-item-title"] a') ||
         root.querySelector("a");
 
-      const title =
-        titleLink?.querySelector("span")?.innerText?.trim() ||
-        titleLink?.innerText?.trim() ||
-        null;
+      if (!titleLink) return null;
 
-      const href = titleLink?.getAttribute("href") || null;
-      const url = href ? new URL(href, window.location.origin).toString() : null;
+      const href = titleLink.getAttribute("href") || "";
+
+      // ❌ Only assignments
+      if (!href.includes("/assignments/")) return null;
+
+      const title =
+        titleLink.querySelector("span")?.innerText?.trim() ||
+        titleLink.innerText?.trim();
+
+      const url = new URL(href, window.location.origin).toString();
 
       const course =
         root.querySelector(".ToDoSidebarItem__Info > span")?.innerText?.trim() ||
@@ -94,14 +76,29 @@ function scrapeCanvasTodoSidebar() {
         root.querySelector('[data-testid="ToDoSidebarItem__InformationRow"]') ||
         root.querySelector(".ToDoSidebarItem__InformationRow");
 
-      const due_text = infoRow?.innerText?.trim() || null;
+      let due_text = null;
 
-      if (!title && !course && !due_text) return null;
+      if (infoRow) {
+        const lis = [...infoRow.querySelectorAll("li")];
+
+        const dateLi = lis.find(li =>
+          !li.innerText.toLowerCase().includes("point")
+        );
+
+        due_text = dateLi?.innerText.trim() || null;
+      }
 
       return { title, course, due_text, url };
     })
-    .filter(Boolean);
+    .filter(Boolean)
+    .slice(0, 5); // ✅ TOP 5 ONLY
 }
+
+/* =========================
+   Message Listener
+========================= */
+
+
 
 function scrapeCanvasCourses() {
   const courses = [];
