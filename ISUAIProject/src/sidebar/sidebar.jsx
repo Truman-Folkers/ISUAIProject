@@ -17,6 +17,8 @@ export default function Sidebar({ isCollapsed, onEnter, onLeave, isDarkMode, set
     }
     const [todos, setTodos] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [courses, setCourses] = useState([]);
+    const [loadingCourses, setLoadingCourses] = useState(false);
 
 const generateTodos = async () => {
   setLoading(true);
@@ -41,6 +43,48 @@ const generateTodos = async () => {
     setTodos(resp.data);
     setLoading(false);
   });
+};
+
+const getCourses = async () => {
+  setLoadingCourses(true);
+  console.log("🔍 Getting courses...");
+
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    console.log("Active tab:", tab?.url);
+    console.log("Tab ID:", tab?.id);
+    
+    // Send message to the ACTIVE TAB (where content script is running)
+    const response = await new Promise((resolve, reject) => {
+      chrome.tabs.sendMessage(
+        tab.id,
+        { type: "SCRAPE_COURSES" },
+        (response) => {
+          if (chrome.runtime.lastError) {
+            console.error("❌ Runtime error:", chrome.runtime.lastError);
+            reject(chrome.runtime.lastError);
+          } else {
+            console.log("📬 Response received:", response);
+            resolve(response);
+          }
+        }
+      );
+    });
+
+    if (response?.success) {
+      console.log("✅ Courses found:", response.data);
+      setCourses(response.data);
+    } else {
+      alert("Failed to scrape courses: " + (response?.error || "Unknown error"));
+      setCourses([]);
+    }
+  } catch (err) {
+    console.error("❌ Error:", err);
+    alert("Error: " + err.message);
+    setCourses([]);
+  }
+  
+  setLoadingCourses(false);
 };
 
 
@@ -141,24 +185,50 @@ const generateTodos = async () => {
 
                     <div className="right-side">
                     <div className="card">  
-                        <h3>Tool 1</h3>
-                        <p>Temporary description</p>
+                        <h3>Courses</h3>
+                        <button className="generate-button" onClick={getCourses} disabled={loadingCourses} style={{width: '100%', marginBottom: '10px'}}>
+                            {loadingCourses ? "Loading…" : "View Courses"}
+                        </button>
+                        <div className="table">
+                            {loadingCourses && <p>Loading courses…</p>}
+                            {!loadingCourses && courses.length > 0 && (
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Course</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {courses.map((course, i) => (
+                                            <tr key={i}>
+                                                <td>
+                                                    <a href={course.url} target="_blank" rel="noreferrer">
+                                                        {course.name}
+                                                    </a>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                            {!loadingCourses && courses.length === 0 && (
+                                <p>No courses found. Make sure you're on a Canvas page with course links.</p>
+                            )}
+                        </div>
                     </div>
-                    <div className="card">
-                        <h3>Tool 2</h3>
-                        <p>Another description</p>
                     </div>
+
                 </div>
+
             </div>
+
         </div>
 
         <Chatbot />
-      {/* Footer */}
-      <div className="sidebar-footer">
-        <small>© 2025 TruDesign LLC</small>
+        {/* Footer */}
+        <div className="sidebar-footer">
+          <small>© 2025 TruDesign LLC</small>
+        </div>
       </div>
-    </div>
-    </div>
-        
     )
 }

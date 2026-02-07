@@ -1,30 +1,41 @@
-console.log("loaddded");
-const sidebar = document.createElement("div");
-sidebar.id = "ai-sidebar-root";
-sidebar.style.position = "fixed";
-sidebar.style.top = "0";
-sidebar.style.right = "0";
-sidebar.style.width = "450px";
-sidebar.style.height = "100vh";
-sidebar.style.zIndex = "999999";
+console.log("✅ CyAI content script LOADING...");
 
-document.body.appendChild(sidebar);
+// Test if this script is actually running
+window.__cyaiLoaded = true;
+console.log("✅ CyAI content script STARTED - window.__cyaiLoaded =", window.__cyaiLoaded);
 
-// Load the React sidebar app
-const iframe = document.createElement("iframe");
-iframe.src = chrome.runtime.getURL("src/sidebar/index.html");
-iframe.style.width = "100%";
-iframe.style.height = "100%";
-iframe.style.border = "none";
+// Wait for DOM to be ready before creating sidebar
+function initSidebar() {
+  console.log("✅ Initializing sidebar...");
+  
+  const sidebar = document.createElement("div");
+  sidebar.id = "ai-sidebar-root";
+  sidebar.style.position = "fixed";
+  sidebar.style.top = "0";
+  sidebar.style.right = "0";
+  sidebar.style.width = "450px";
+  sidebar.style.height = "100vh";
+  sidebar.style.zIndex = "999999";
 
-sidebar.appendChild(iframe);
-console.log("Sidebar container added:", sidebar);
-console.log("Iframe element:", iframe);
+  document.body.appendChild(sidebar);
 
+  // Load the React sidebar app
+  const iframe = document.createElement("iframe");
+  iframe.src = chrome.runtime.getURL("src/sidebar/index.html");
+  iframe.style.width = "100%";
+  iframe.style.height = "100%";
+  iframe.style.border = "none";
 
-console.log("CyAI content script loaded");
+  sidebar.appendChild(iframe);
+  console.log("✅ Sidebar container added");
+}
 
-console.log("CyAI content script loaded");
+// Make sure DOM is ready
+if (document.body) {
+  initSidebar();
+} else {
+  document.addEventListener("DOMContentLoaded", initSidebar);
+}
 
 function scrapeCanvasTodoSidebar() {
   const list = document.querySelector("#planner-todosidebar-item-list");
@@ -66,15 +77,79 @@ function scrapeCanvasTodoSidebar() {
     .filter(Boolean);
 }
 
+function scrapeCanvasCourses() {
+  const courses = [];
+  
+  // Look for all links that might be courses
+  const allLinks = document.querySelectorAll("a[href*='/courses/']");
+  console.log("Found links with /courses/:", allLinks.length);
+  
+  allLinks.forEach((link) => {
+    const href = link.getAttribute("href");
+    console.log("Processing link:", href);
+    
+    // Extract course ID from various URL patterns
+    let courseId = null;
+    let match = href.match(/\/courses\/(\d+)/);
+    if (match) {
+      courseId = match[1];
+    }
+    
+    const courseName = link.innerText?.trim();
+    
+    console.log("Course ID:", courseId, "Name:", courseName);
+    
+    if (courseId && courseName && !courses.find(c => c.id === courseId)) {
+      try {
+        const fullUrl = new URL(href, window.location.origin).toString();
+        courses.push({
+          id: courseId,
+          name: courseName,
+          url: fullUrl
+        });
+        console.log("Added course:", courseId, courseName);
+      } catch (err) {
+        console.error("Error constructing URL:", err);
+      }
+    }
+  });
+  
+  console.log("Total courses found:", courses.length, courses);
+  return courses;
+}
+
+console.log("✅ CyAI content script LOADED - message listener active");
+
+// Catch ALL messages for debugging
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  console.log("📨 [CONTENT SCRIPT] Message received:", msg.type, "from:", sender);
+  
   if (msg.type === "SCRAPE_PAGE") {
+    console.log("🔄 Processing SCRAPE_PAGE");
     try {
       const data = scrapeCanvasTodoSidebar();
+      console.log("✅ SCRAPE_PAGE successful, sending data:", data.length, "items");
       sendResponse({ success: true, data });
     } catch (err) {
-      console.error("Scrape failed:", err);
+      console.error("❌ Scrape failed:", err);
       sendResponse({ success: false, error: err?.message || String(err) });
     }
     return true;
   }
+  
+  if (msg.type === "SCRAPE_COURSES") {
+    console.log("🔄 Processing SCRAPE_COURSES");
+    try {
+      const courses = scrapeCanvasCourses();
+      console.log("✅ SCRAPE_COURSES successful, sending data:", courses.length, "courses");
+      sendResponse({ success: true, data: courses });
+    } catch (err) {
+      console.error("❌ Course scrape failed:", err);
+      sendResponse({ success: false, error: err?.message || String(err) });
+    }
+    return true;
+  }
+  
+  console.log("⚠️ [CONTENT SCRIPT] Unknown message type:", msg.type);
+  return false;
 });
