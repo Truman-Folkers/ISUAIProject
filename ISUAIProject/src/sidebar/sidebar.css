@@ -309,7 +309,7 @@ html, body, #root, .app-container {
   font-weight: 500;
   font-size: 0.8rem;
   color: #b45309;
-  white-space: nowrap; /* keeps date tidy */
+  /* white-space: nowrap; keeps date tidy */
 }
 /*--------------------------------------------*/
 
