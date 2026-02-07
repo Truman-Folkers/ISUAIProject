@@ -76,7 +76,17 @@ function scrapeCanvasTodoSidebar() {
         root.querySelector('[data-testid="ToDoSidebarItem__InformationRow"]') ||
         root.querySelector(".ToDoSidebarItem__InformationRow");
 
-      const due_text = infoRow?.innerText?.trim() || null;
+      let due_text = null;
+
+      if (infoRow) {
+        const lis = [...infoRow.querySelectorAll("li")];
+
+        const dateLi = lis.find(li =>
+          !li.innerText.toLowerCase().includes("point")
+        );
+
+        due_text = dateLi?.innerText.trim() || null;
+      }
 
       return { title, course, due_text, url };
     })
