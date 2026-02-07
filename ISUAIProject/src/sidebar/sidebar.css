@@ -375,6 +375,11 @@ html, body, #root, .app-container {
   color: #b0b0b0;
 }
 
+.sidebar-container.dark-mode .todo-card {
+  background: #2a2a2a;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+}
+
 .sidebar-container.dark-mode .card {
   background-color: #2a2a2a;
   color: #e0e0e0;

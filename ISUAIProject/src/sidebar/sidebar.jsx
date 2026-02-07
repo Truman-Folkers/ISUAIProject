@@ -97,7 +97,7 @@ const generateTodos = async () => {
                         {loading ? "Working…" : "Generate To-Do"}
                     </button>
 
-                    <div className = "todo-card">
+                    <div className = {`todo-card  ${isDarkMode ? 'dark-mode' : ''}`}>
                         <h4 className = "todo-header">Top 5 To-Do Items</h4>
                         <div className="todo-table">
                             {loading && <p>Generating…</p>}
