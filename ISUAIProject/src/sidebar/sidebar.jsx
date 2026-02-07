@@ -457,7 +457,6 @@ ${syllabusText}`;
                             
 
                             <div className="right-side">
-                            <div className="card">  
                                 {!isCoursePage && (
                                     <button className="generate-button" onClick={getCourses} disabled={loadingCourses} style={{width: '100%', marginBottom: '10px'}}>
                                         {loadingCourses ? "Loading…" : "Go to Course"}
@@ -492,7 +491,6 @@ ${syllabusText}`;
                                 {!loadingCourses && courses.length === 0 && !isCoursePage && (
                                     <p style={{fontSize: '12px', color: '#666', marginTop: '10px'}}>Click button to load courses</p>
                                 )}
-                            </div>
                             </div>
 
                             </div>

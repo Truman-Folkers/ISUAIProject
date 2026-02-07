@@ -4,35 +4,71 @@ console.log("CyAI contentScript.js loaded");
    Sidebar Injection
 ========================= */
 
-const sidebar = document.createElement("div");
-sidebar.id = "ai-sidebar-root";
-sidebar.style.position = "fixed";
-sidebar.style.top = "0";
-sidebar.style.right = "0";
-sidebar.style.width = "50px";
-sidebar.style.height = "100vh";
-sidebar.style.borderTopLeftRadius = "25px";
-sidebar.style.borderBottomLeftRadius = "25px";
-sidebar.style.zIndex = "999999";
-sidebar.style.transition = "width 0.3s ease-in-out, box-shadow 0.3s ease-in-out";
-sidebar.style.boxShadow = "0px 0 10px rgba(0, 0, 0, 0.15)";
+// Wait for document.body to be ready
+if (!document.body) {
+  console.warn("⚠️ document.body not ready, waiting...");
+  document.addEventListener("DOMContentLoaded", initSidebar);
+} else {
+  initSidebar();
+}
 
-sidebar.addEventListener("mouseenter", () => {
-  sidebar.style.width = "34vh";
-});
-sidebar.addEventListener("mouseleave", () => {
+function initSidebar() {
+  console.log("✅ Initializing sidebar...");
+  
+  const sidebar = document.createElement("div");
+  sidebar.id = "ai-sidebar-root";
+  sidebar.style.position = "fixed";
+  sidebar.style.top = "0";
+  sidebar.style.right = "0";
   sidebar.style.width = "50px";
-});
+  sidebar.style.height = "100vh";
+  sidebar.style.borderTopLeftRadius = "25px";
+  sidebar.style.borderBottomLeftRadius = "25px";
+  sidebar.style.zIndex = "999999";
+  sidebar.style.transition = "width 0.3s ease-in-out, box-shadow 0.3s ease-in-out";
+  sidebar.style.boxShadow = "0px 0 10px rgba(0, 0, 0, 0.15)";
+  sidebar.style.backgroundColor = "rgb(255, 255, 250)";
+
+  sidebar.addEventListener("mouseenter", () => {
+    sidebar.style.width = "34vh";
+  });
+  sidebar.addEventListener("mouseleave", () => {
+    sidebar.style.width = "50px";
+  });
 
   document.body.appendChild(sidebar);
+  console.log("✅ Sidebar div appended to body");
 
-const iframe = document.createElement("iframe");
-iframe.src = chrome.runtime.getURL("src/sidebar/index.html");
-iframe.style.width = "100%";
-iframe.style.height = "100%";
-iframe.style.border = "none";
+  const iframeUrl = chrome.runtime.getURL("src/sidebar/index.html");
+  console.log("📍 Loading iframe from:", iframeUrl);
 
-sidebar.appendChild(iframe);
+  const iframe = document.createElement("iframe");
+  iframe.src = iframeUrl;
+  iframe.style.width = "100%";
+  iframe.style.height = "100%";
+  iframe.style.border = "none";
+
+  iframe.onload = () => {
+    console.log("✅ Iframe loaded successfully");
+  };
+
+  iframe.onerror = (err) => {
+    console.error("❌ Iframe load error:", err);
+  };
+
+  sidebar.appendChild(iframe);
+  console.log("✅ Iframe appended to sidebar");
+
+  // Load and apply hidden courses on page load
+  chrome.storage.sync.get("hiddenCourses", (data) => {
+    if (data.hiddenCourses) {
+      console.log("📦 Loaded hidden courses from storage:", data.hiddenCourses);
+      applyDashboardCourseVisibility(data.hiddenCourses);
+    } else {
+      console.log("ℹ️ No hidden courses in storage");
+    }
+  });
+}
 
 /* =========================
    Canvas To-Do Scraper
