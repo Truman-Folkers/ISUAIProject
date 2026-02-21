@@ -8,6 +8,10 @@
   background: rgb(255, 255, 250);
 }
 
+.sidebar-container.collapsed .chatbot {
+  opacity: 0;
+}
+
 /* Container that pushes messages to bottom */
 .messages-container {
   flex: 1;
