@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import "./chatbot.css";
 import { askDevStral } from "../services/openrouter.js";
+import cyclonesLogo from "../assets/iowa_state_cyclones_logo_secondary_20088357.png";
 
 export default function Chatbot() {
   const [messages, setMessages] = useState([
@@ -45,19 +46,27 @@ export default function Chatbot() {
       <div className="messages-container">
         <div className="messages">
           {messages.map((m, idx) => (
-            <div key={idx} className={`message ${m.role}`}>
-              <div className="message-content">
-                {m.content}
+            <div key={idx} className={`message-row ${m.role}`}>
+              {m.role === "assistant" && (
+                <img src={cyclonesLogo} alt="CyAI" className="avatar" />
+              )}
+              <div className={`message ${m.role}`}>
+                <div className="message-content">
+                  {m.content}
+                </div>
               </div>
             </div>
           ))}
           
           {loading && (
-            <div className="message assistant">
-              <div className="message-content typing">
-                <span className="dot"></span>
-                <span className="dot"></span>
-                <span className="dot"></span>
+            <div className="message-row assistant">
+              <img src={cyclonesLogo} alt="CyAI" className="avatar" />
+              <div className="message assistant">
+                <div className="message-content typing">
+                  <span className="dot"></span>
+                  <span className="dot"></span>
+                  <span className="dot"></span>
+                </div>
               </div>
             </div>
           )}

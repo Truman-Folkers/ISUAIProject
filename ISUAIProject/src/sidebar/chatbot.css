@@ -1,4 +1,28 @@
 /* src/components/chatbot.css - UPDATED */
+
+/* Row wrapper for avatar + bubble */
+.message-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+
+.message-row.user {
+  flex-direction: row-reverse;
+}
+
+/* Avatar */
+.avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: #fff;
+  border: 1px solid #e5e5e5;
+  padding: 2px;
+}
+
 .chatbot {
   width: 100%;
   height: 45%;
@@ -42,7 +66,6 @@
 }
 
 .message.user {
-  align-self: flex-end;
   background: linear-gradient(135deg, #007AFF 0%, #0056CC 100%);
   color: white;
   border-bottom-right-radius: 4px;
@@ -50,7 +73,6 @@
 }
 
 .message.assistant {
-  align-self: flex-start;
   background: #F2F2F7;
   color: #1C1C1E;
   border-bottom-left-radius: 4px;
