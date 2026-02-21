@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import Chatbot from "./chatbot.jsx";
 import { askDevStral } from "../services/openrouter.js";
 
-const VERSION = "1.0.0";
+const VERSION = "2.0.1";
 
 export default function Sidebar({ isCollapsed, isDarkMode, setIsDarkMode }) {
 

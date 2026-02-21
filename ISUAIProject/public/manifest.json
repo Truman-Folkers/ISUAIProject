@@ -8,6 +8,20 @@
   "background": {
     "service_worker": "assets/background.js"
   },
+    "icons": {
+    "16": "icons/CyAILogo16.png",
+      "48": "icons/CyAILogo48.png",
+      "128": "icons/CyAILogo128.png"
+  },
+
+  "action": {
+    "default_icon": {
+      "16": "icons/CyAILogo16.png",
+      "48": "icons/CyAILogo48.png",
+      "128": "icons/CyAILogo128.png"
+    }
+  },
+
   "content_scripts": [
     {
       "matches": ["https://canvas.iastate.edu/*"],
