@@ -3,20 +3,12 @@ import { useState, useEffect } from "react";
 import Chatbot from "./chatbot.jsx";
 import Tasklist from "./tasklist.jsx";
 
-const VERSION = "1.0.0";
+const VERSION = "2.0.1";
 
 export default function Sidebar({ isCollapsed, isDarkMode, setIsDarkMode }){
 
     const [val, setVal] = useState("Ask Cy");
 
-    const click = () => {
-        // python
-    }
-
-    const change = event => {
-        // do python
-        setVal(event.target.value);
-    }
     const [todos, setTodos] = useState([]);
     const [todosFetched, setTodosFetched] = useState(false);
     const [loading, setLoading] = useState(false);
