@@ -151,6 +151,7 @@ html, body, #root, .app-container {
   flex-shrink: 0;       /* keep at bottom */
   opacity: 1;
   transition: opacity 0.3s ease-in-out;
+  border-bottom-left-radius: 25px;
 }
 
 .sidebar-container.collapsed .sidebar-footer {
@@ -359,7 +360,7 @@ html, body, #root, .app-container {
 }
 
 .sidebar-container.dark-mode .sidebar-header {
-  background-color: #2d2d2d;
+  background-color: #5d0f0f;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
 }
 
