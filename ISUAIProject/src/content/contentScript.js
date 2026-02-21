@@ -25,7 +25,8 @@ function initSidebar() {
   sidebar.style.borderTopLeftRadius = "25px";
   sidebar.style.borderBottomLeftRadius = "25px";
   sidebar.style.zIndex = "999999";
-  sidebar.style.transition = "width 0.3s ease-in-out, box-shadow 0.3s ease-in-out";
+  sidebar.style.transition = "width 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1)";
+  sidebar.style.willChange = "width";
   sidebar.style.boxShadow = "0px 0 10px rgba(0, 0, 0, 0.15)";
   sidebar.style.backgroundColor = "rgb(255, 255, 250)";
 

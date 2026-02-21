@@ -28,7 +28,8 @@ html, body, #root, .app-container {
   color: #333;
   overflow: visible !important;
   z-index: 999999999;    /* always on top of Canvas content */
-  transition: width 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: width;
 }
 
 /* Collapsed state for the sidebar */
@@ -68,7 +69,7 @@ html, body, #root, .app-container {
   font-size: 1.25rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   flex-shrink: 0;       /* don't shrink */
-  transition: opacity 0.3s ease-in-out;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
   overflow: hidden;
   padding-left: 50px;
@@ -88,7 +89,7 @@ html, body, #root, .app-container {
   flex-direction: column;
   gap: 12px;
   opacity: 1;
-  transition: opacity 0.3s ease-in-out;
+  transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .sidebar-container.collapsed .sidebar-content {
@@ -324,7 +325,7 @@ html, body, #root, .app-container {
 
 /* Dark mode toggle button */
 .dark-mode-toggle {
-  background: rgba(255, 255, 255, 0.2);
+  background: transparent;
   border: none;
   color: white;
   font-size: 1.2rem;
@@ -337,6 +338,32 @@ html, body, #root, .app-container {
   justify-content: center;
   transition: all 0.2s;
   padding: 0;
+}
+
+/* Settings toggle button */
+.settings-toggle {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  padding: 0;
+}
+
+.settings-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.05);
+}
+
+.settings-toggle:active {
+  transform: scale(0.95);
 }
 
 .dark-mode-toggle:hover {
