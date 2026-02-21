@@ -1,478 +1,294 @@
 import "./sidebar.css";
 import { useState, useEffect } from "react";
 import Chatbot from "./chatbot.jsx";
-import Tasklist from "./tasklist.jsx";
+import { askDevStral } from "../services/openrouter.js";
 
 const VERSION = "1.0.0";
 
-export default function Sidebar({ isCollapsed, isDarkMode, setIsDarkMode }){
+export default function Sidebar({ isCollapsed, isDarkMode, setIsDarkMode }) {
 
-    const [val, setVal] = useState("Ask Cy");
+    // ── State ──────────────────────────────────────────────
+    const [activeTab, setActiveTab]               = useState("home");
 
-    const click = () => {
-        // python
-    }
+    // Dashboard
+    const [todos, setTodos]                       = useState([]);
+    const [todosFetched, setTodosFetched]         = useState(false);
+    const [loading, setLoading]                   = useState(false);
+    const [courses, setCourses]                   = useState([]);
+    const [loadingCourses, setLoadingCourses]     = useState(false);
 
-    const change = event => {
-        // do python
-        setVal(event.target.value);
-    }
-    const [todos, setTodos] = useState([]);
-    const [todosFetched, setTodosFetched] = useState(false);
-    const [loading, setLoading] = useState(false);
-    const [courses, setCourses] = useState([]);
-    const [loadingCourses, setLoadingCourses] = useState(false);
-    const [selectedCourses, setSelectedCourses] = useState({});
-    const [activeTab, setActiveTab] = useState("home"); // "home", "settings"
+    // Settings
     const [dashboardCourses, setDashboardCourses] = useState([]);
-    const [hiddenCourses, setHiddenCourses] = useState({});
-    const [isCoursePage, setIsCoursePage] = useState(false);
-    const [currentCourseId, setCurrentCourseId] = useState(null);
-    const [summarizingCourse, setSummarizingCourse] = useState(false);
-    const [syllabusContent, setSyllabusContent] = useState("");
+    const [hiddenCourses, setHiddenCourses]       = useState({});
 
-    // Load hidden courses on component mount
+    // Course page
+    const [isCoursePage, setIsCoursePage]         = useState(false);
+    const [currentCourseId, setCurrentCourseId]   = useState(null);
+    const [summarizing, setSummarizing]           = useState(false);
+    const [syllabusContent, setSyllabusContent]   = useState("");
+
+    // ── On Mount ───────────────────────────────────────────
     useEffect(() => {
-      chrome.storage.sync.get("hiddenCourses", (data) => {
-        if (data.hiddenCourses) {
-          console.log("✅ Loaded hidden courses on startup:", data.hiddenCourses);
-          setHiddenCourses(data.hiddenCourses);
-        }
-      });
+        chrome.storage.sync.get("hiddenCourses", (data) => {
+            if (data.hiddenCourses) setHiddenCourses(data.hiddenCourses);
+        });
+
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (!tabs[0]) return;
+            const url = tabs[0].url;
+            const match = url.match(/\/courses\/(\d+)/);
+            if (match && !url.includes("/settings") && !url.includes("/grades")) {
+                setIsCoursePage(true);
+                setCurrentCourseId(match[1]);
+            } else {
+                setIsCoursePage(false);
+                setCurrentCourseId(null);
+            }
+        });
     }, []);
 
-    // Detect if we're on a course page
-    useEffect(() => {
-      chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        if (tabs[0]) {
-          const url = tabs[0].url;
-          console.log("📍 Current URL:", url);
-          
-          // Check if URL matches course page pattern: /courses/[id]
-          const courseMatch = url.match(/\/courses\/(\d+)/);
-          if (courseMatch && !url.includes("/settings") && !url.includes("/grades")) {
-            const courseId = courseMatch[1];
-            console.log("✅ On course page:", courseId);
-            setIsCoursePage(true);
-            setCurrentCourseId(courseId);
-          } else {
-            setIsCoursePage(false);
-            setCurrentCourseId(null);
-          }
-        }
-      });
-    }, []);
+    // ── Helper: send message to active tab ─────────────────
+    const sendTabMessage = (type, extra = {}) =>
+        new Promise((resolve, reject) => {
+            chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+                if (!tabs[0]) return reject(new Error("No active tab"));
+                chrome.tabs.sendMessage(tabs[0].id, { type, ...extra }, (resp) => {
+                    if (chrome.runtime.lastError) return reject(chrome.runtime.lastError);
+                    resolve(resp);
+                });
+            });
+        });
 
-const generateTodos = async () => {
-  // Toggle: if todos are already shown, collapse the list
-  if (todos.length > 0) {
-    setTodos([]);
-    setTodosFetched(false);
-    return;
-  }
-
-  setLoading(true);
-
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-
-  chrome.tabs.sendMessage(tab.id, { type: "SCRAPE_PAGE" }, (resp) => {
-    if (chrome.runtime.lastError) {
-      console.error(chrome.runtime.lastError);
-      setLoading(false);
-      return;
-    }
-
-    if (!resp?.success) {
-      console.error("Scrape failed:", resp?.error || resp);
-      setTodos([]);
-      setTodosFetched(true);
-      setLoading(false);
-      return;
-    }
-
-    // Directly display scraped Canvas items
-    setTodos(resp.data);
-    setTodosFetched(true);
-    setLoading(false);
-  });
-};
-
-const getCourses = async () => {
-  // Toggle: if courses are already shown, collapse the list
-  if (courses.length > 0) {
-    setCourses([]);
-    return;
-  }
-
-  setLoadingCourses(true);
-  console.log("🔍 Getting dashboard courses...");
-
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    console.log("Active tab:", tab?.url);
-    console.log("Tab ID:", tab?.id);
-    
-    // Send message to scrape dashboard courses
-    const response = await new Promise((resolve, reject) => {
-      chrome.tabs.sendMessage(
-        tab.id,
-        { type: "GET_DASHBOARD_COURSES" },
-        (response) => {
-          if (chrome.runtime.lastError) {
-            console.error("❌ Runtime error:", chrome.runtime.lastError);
-            reject(chrome.runtime.lastError);
-          } else {
-            console.log("📬 Response received:", response);
-            resolve(response);
-          }
-        }
-      );
-    });
-
-    if (response?.success) {
-      console.log("✅ Dashboard courses found:", response.data);
-      setCourses(response.data);
-    } else {
-      alert("Failed to get courses: " + (response?.error || "Unknown error"));
-      setCourses([]);
-    }
-  } catch (err) {
-    console.error("❌ Error:", err);
-    alert("Error: " + err.message);
-    setCourses([]);
-  }
-  
-  setLoadingCourses(false);
-};
-
-const toggleCourseSelection = (courseId) => {
-  const updated = { ...selectedCourses };
-  updated[courseId] = !updated[courseId];
-  setSelectedCourses(updated);
-  
-  // Save to chrome storage
-  chrome.storage.sync.set({ selectedCourses: updated });
-  console.log("💾 Saved course preferences:", updated);
-};
-
-const loadDashboardCourses = async () => {
-  console.log("🔍 Loading dashboard courses for settings...");
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    
-    const response = await new Promise((resolve, reject) => {
-      chrome.tabs.sendMessage(
-        tab.id,
-        { type: "GET_DASHBOARD_COURSES" },
-        (response) => {
-          if (chrome.runtime.lastError) {
-            console.error("❌ Runtime error:", chrome.runtime.lastError);
-            reject(chrome.runtime.lastError);
-          } else {
-            resolve(response);
-          }
-        }
-      );
-    });
-
-    if (response?.success) {
-      console.log("✅ Dashboard courses found:", response.data);
-      setDashboardCourses(response.data);
-      
-      // Load saved hidden courses
-      chrome.storage.sync.get("hiddenCourses", (data) => {
-        if (data.hiddenCourses) {
-          console.log("✅ Loaded hidden courses:", data.hiddenCourses);
-          setHiddenCourses(data.hiddenCourses);
-        }
-      });
-    } else {
-      alert("Failed to load dashboard courses: " + (response?.error || "Unknown error"));
-    }
-  } catch (err) {
-    console.error("❌ Error:", err);
-    alert("Error: " + err.message);
-  }
-};
-
-const toggleCourseVisibility = (courseId) => {
-  const updated = { ...hiddenCourses };
-  updated[courseId] = !updated[courseId];
-  setHiddenCourses(updated);
-  
-  // Save to chrome storage
-  chrome.storage.sync.set({ hiddenCourses: updated });
-  console.log("💾 Saved hidden courses:", updated);
-  
-  // Tell content script to update the dashboard
-  chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-    if (tabs[0]) {
-      chrome.tabs.sendMessage(tabs[0].id, { 
-        type: "APPLY_COURSE_VISIBILITY", 
-        hiddenCourses: updated 
-      });
-    }
-  });
-};
-
-const summarizeSyllabus = async () => {
-  setSummarizingCourse(true);
-  setSyllabusContent("");
-  console.log("📄 Summarizing syllabus for course:", currentCourseId);
-  
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    
-    const response = await new Promise((resolve, reject) => {
-      chrome.tabs.sendMessage(
-        tab.id,
-        { type: "SCRAPE_SYLLABUS", courseId: currentCourseId },
-        (response) => {
-          if (chrome.runtime.lastError) {
-            console.error("❌ Runtime error:", chrome.runtime.lastError);
-            reject(chrome.runtime.lastError);
-          } else {
-            resolve(response);
-          }
-        }
-      );
-    });
-    
-    if (response?.success && response.data) {
-      console.log("✅ Syllabus scraped, processing with AI...");
-      
-      // Check if meaningful content was found
-      if (response.data.length < 50 || response.data.includes("No syllabus content found")) {
-        setSyllabusContent("No syllabus detected");
-      } else {
-        // Send to AI for summarization
+    // ── Dashboard Actions ──────────────────────────────────
+    const generateTodos = async () => {
+        if (todos.length > 0) { setTodos([]); setTodosFetched(false); return; }
+        setLoading(true);
         try {
-          const aiSummary = await summarizeWithAI(response.data);
-          setSyllabusContent(aiSummary);
-        } catch (aiErr) {
-          console.error("❌ AI Error:", aiErr);
-          setSyllabusContent("Failed to process syllabus. Please ensure you have configured an API key.");
+            const resp = await sendTabMessage("SCRAPE_PAGE");
+            setTodos(resp?.success ? resp.data : []);
+        } catch (err) {
+            console.error("generateTodos error:", err);
+            setTodos([]);
         }
-      }
-    } else {
-      setSyllabusContent("No syllabus detected");
-    }
-  } catch (err) {
-    console.error("❌ Error:", err);
-    setSyllabusContent("Error: " + err.message);
-  }
-  
-  setSummarizingCourse(false);
-};
+        setTodosFetched(true);
+        setLoading(false);
+    };
 
-const summarizeWithAI = async (syllabusText) => {
-  console.log("🤖 Calling OpenRouter Devstral to summarize...");
-  
-  const prompt = `Please analyze this course syllabus and extract the following information. Format your response EXACTLY as shown below with clear sections:
+    const getCourses = async () => {
+        if (courses.length > 0) { setCourses([]); return; }
+        setLoadingCourses(true);
+        try {
+            const resp = await sendTabMessage("GET_DASHBOARD_COURSES");
+            setCourses(resp?.success ? resp.data : []);
+        } catch (err) {
+            console.error("getCourses error:", err);
+            setCourses([]);
+        }
+        setLoadingCourses(false);
+    };
+
+    // ── Settings Actions ───────────────────────────────────
+    const loadDashboardCourses = async () => {
+        try {
+            const resp = await sendTabMessage("GET_DASHBOARD_COURSES");
+            if (resp?.success) {
+                setDashboardCourses(resp.data);
+                chrome.storage.sync.get("hiddenCourses", (data) => {
+                    if (data.hiddenCourses) setHiddenCourses(data.hiddenCourses);
+                });
+            }
+        } catch (err) {
+            console.error("loadDashboardCourses error:", err);
+        }
+    };
+
+    const toggleCourseVisibility = (courseId) => {
+        const updated = { ...hiddenCourses, [courseId]: !hiddenCourses[courseId] };
+        setHiddenCourses(updated);
+        chrome.storage.sync.set({ hiddenCourses: updated });
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+            if (tabs[0]) chrome.tabs.sendMessage(tabs[0].id, { type: "APPLY_COURSE_VISIBILITY", hiddenCourses: updated });
+        });
+    };
+
+    // ── Course Page Actions ────────────────────────────────
+    const summarizeSyllabus = async () => {
+        setSummarizing(true);
+        setSyllabusContent("");
+        try {
+            const resp = await sendTabMessage("SCRAPE_SYLLABUS", { courseId: currentCourseId });
+            if (resp?.success && resp.data && resp.data.length > 50 && !resp.data.includes("No syllabus content found")) {
+                const prompt = `Please analyze this course syllabus and extract the following information. Format your response EXACTLY as shown:
 
 SYLLABUS SUMMARY
 ================
 
 1) DUE DATES:
-[List all mentioned due dates, deadlines, or key dates]
+[List all due dates and deadlines]
 
 2) GRADING BREAKDOWN:
-[How grades are calculated - include percentages if mentioned]
+[How grades are calculated with percentages]
 
 3) MAJOR ASSIGNMENTS:
-[List significant assignments, projects, exams, etc.]
+[Significant assignments, projects, exams]
 
 4) INSTRUCTOR CONTACT:
-[Instructor name, email, office hours, phone if available]
+[Name, email, office hours]
 
 ---
-
 SYLLABUS TEXT:
-${syllabusText}`;
-
-  try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${import.meta.env.VITE_OPENROUTER_API_KEY}`,
-        "HTTP-Referer": "https://canvas.instructure.com",
-        "X-Title": "CyAI",
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "mistralai/mistral-7b-instruct:free",
-        messages: [
-          {
-            role: "user",
-            content: prompt
-          }
-        ]
-      })
-    });
-
-    if (!response.ok) {
-      const error = await response.json();
-      console.error("❌ OpenRouter Error:", error);
-      throw new Error(`OpenRouter API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-    if (!data.choices?.[0]?.message?.content) {
-      throw new Error('No response from AI');
-    }
-
-    return data.choices[0].message.content;
-  } catch (err) {
-    console.error("❌ AI Error:", err);
-    throw err;
-  }
-};
+${resp.data}`;
+                setSyllabusContent(await askDevStral(prompt));
+            } else {
+                setSyllabusContent("No syllabus content detected for this course.");
+            }
+        } catch (err) {
+            console.error("summarizeSyllabus error:", err);
+            setSyllabusContent("Error summarizing syllabus: " + err.message);
+        }
+        setSummarizing(false);
+    };
 
 
-    const toggleDarkMode = () => {
-        setIsDarkMode(!isDarkMode);
-    }
-
-    return(
-        <div 
-            className={`sidebar-container ${isCollapsed ? 'collapsed' : ''} ${isDarkMode ? 'dark-mode' : ''}`}
-        >
-
+    // ── Render ─────────────────────────────────────────────
+    return (
+        <div className={`sidebar-container ${isCollapsed ? "collapsed" : ""} ${isDarkMode ? "dark-mode" : ""}`}>
             <div className="sidebar-content-wrapper">
 
-                <div className="sidebar-header">
-                    {/* Simplified header logic */}
+                {/* ── Header ── */}
+                <div className={`sidebar-header ${isCoursePage ? "course-header" : ""}`}>
                     <div className="header-flex">
-                        <h2>{isCollapsed ? '' : 'CyAI'}</h2>
+                        <h2>{isCollapsed ? "" : "CyAI"}</h2>
                         {!isCollapsed && (
                             <>
-                                <button className="dark-mode-toggle" onClick={toggleDarkMode} title="Toggle dark mode">
-                                    {isDarkMode ? '☀️' : '🌙'}
+                                <button className="dark-mode-toggle" onClick={() => setIsDarkMode(!isDarkMode)} title="Toggle dark mode">
+                                    {isDarkMode ? "☀️" : "🌙"}
                                 </button>
-                                <button className="settings-toggle" onClick={() => setActiveTab(activeTab === 'home' ? 'settings' : 'home')} title="Settings" style={{marginLeft: '8px'}}>
+                                <button className="settings-toggle" onClick={() => setActiveTab(activeTab === "home" ? "settings" : "home")} title="Settings">
                                     ⚙️
                                 </button>
                             </>
                         )}
                     </div>
+                    {!isCollapsed && (
+                        <div className={`page-context-banner ${isCoursePage ? "course-banner" : "home-banner"}`}>
+                            {isCoursePage ? "📖 Course Page" : "🏠 Dashboard"}
+                        </div>
+                    )}
                 </div>
 
+                {/* ── Body ── */}
                 <div className="sidebar-content">
-                    {isCoursePage && activeTab === 'home' && (
-                        <>
-                            <h3>Course Tools</h3>
-                            
-                            <button className="generate-button" onClick={summarizeSyllabus} disabled={summarizingCourse} style={{width: '100%', marginBottom: '15px'}}>
-                                {summarizingCourse ? "Summarizing…" : "📄 Summarize Syllabus"}
-                            </button>
-                            
-                            {syllabusContent && syllabusContent.trim() && (
-                                <div style={{marginBottom: '15px'}}>
+
+                    {/* Settings Tab */}
+                    {activeTab === "settings" && (
+                        <div className="settings-view">
+                            <h3>Settings</h3>
+                            {!isCoursePage && (
+                                <>
+                                    <p className="settings-subtitle">Hide courses from your Canvas dashboard:</p>
+                                    <button className="generate-button" onClick={loadDashboardCourses} style={{ width: "100%", marginBottom: "10px" }}>
+                                        Load Dashboard Courses
+                                    </button>
+                                    {dashboardCourses.length > 0 ? (
+                                        <div className="settings-course-list">
+                                            {dashboardCourses.map((course) => (
+                                                <label key={course.id} className={`settings-course-item ${isDarkMode ? "dark" : ""}`}>
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={!hiddenCourses[course.id]}
+                                                        onChange={() => toggleCourseVisibility(course.id)}
+                                                    />
+                                                    <span>{course.name}</span>
+                                                </label>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="settings-empty">Click "Load Dashboard Courses" to get started</p>
+                                    )}
+                                </>
+                            )}
+                            {isCoursePage && (
+                                <p className="settings-empty">More course settings coming soon!</p>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Home Tab — Course Page */}
+                    {activeTab === "home" && isCoursePage && (
+                        <div className="course-page-view">
+                            <div className="course-page-card">
+                                <h3>Course Tools</h3>
+                                <p className="course-page-subtitle">You're viewing a course. Use the tools below to help you study.</p>
+                                <button className="generate-button" onClick={summarizeSyllabus} disabled={summarizing} style={{ width: "100%" }}>
+                                    {summarizing ? "⏳ Summarizing…" : "📄 Summarize Syllabus"}
+                                </button>
+                                {syllabusContent && (
                                     <textarea
                                         value={syllabusContent}
                                         readOnly
-                                        style={{
-                                            width: '100%',
-                                            height: '300px',
-                                            padding: '10px',
-                                            border: '1px solid #ddd',
-                                            borderRadius: '4px',
-                                            fontFamily: 'monospace',
-                                            fontSize: '11px',
-                                            backgroundColor: isDarkMode ? '#222' : '#f9f9f9',
-                                            color: isDarkMode ? '#ddd' : '#333',
-                                            resize: 'vertical'
-                                        }}
+                                        className={`syllabus-output ${isDarkMode ? "dark" : ""}`}
                                     />
-                                </div>
-                            )}
-                            
-                            <hr style={{margin: '15px 0', border: 'none', borderTop: '1px solid #ddd'}} />
-                        </>
-                    )}
-                    
-                    {activeTab === 'home' ? (
-                        <>
-                            {!isCoursePage && (
-                                <>
-                                    <p>Welcome to CyAI!</p>
-                                    <p>Use this sidebar to ask questions, see your To-Do list, or take a shortcut to your class webpages!</p>
-                                </>
-                            )}
-
-                            <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
-
-                                {/* Go to Course section */}
-                                {!isCoursePage && (
-                                    <div>
-                                        <button className="generate-button" onClick={getCourses} disabled={loadingCourses} style={{width: '100%'}}>
-                                            {loadingCourses ? "Loading…" : courses.length > 0 ? "Hide Courses" : "Go to Course"}
-                                        </button>
-
-                                        {loadingCourses && <p>Loading courses…</p>}
-
-                                        {!loadingCourses && courses.length > 0 && (
-                                            <div className="courses-list" style={{marginTop: '10px'}}>
-                                                <h4 style={{marginTop: '0', marginBottom: '10px'}}>Your Courses:</h4>
-                                                <ul style={{listStyle: 'none', padding: 0, margin: 0}}>
-                                                    {courses.filter(course => !hiddenCourses[course.id]).map((course) => (
-                                                        <li key={course.id} style={{marginBottom: '8px'}}>
-                                                            <a
-                                                                href={course.url}
-                                                                target="_blank"
-                                                                rel="noreferrer"
-                                                                className="todo-link"
-                                                            >
-                                                                {course.name}
-                                                            </a>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                                {courses.filter(course => !hiddenCourses[course.id]).length === 0 && (
-                                                    <p style={{fontSize: '11px', color: '#999', marginTop: '8px'}}>All courses are hidden in settings</p>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {!loadingCourses && courses.length === 0 && (
-                                            <p style={{fontSize: '12px', color: '#666', marginTop: '10px'}}>Click button to load courses</p>
-                                        )}
-                                    </div>
                                 )}
+                            </div>
+                        </div>
+                    )}
 
-                                {/* Generate To-Do section */}
-                                {!isCoursePage && (
-                                    <div>
-                                        <button className="generate-button" onClick={generateTodos} disabled={loading} style={{width: '100%'}}>
-                                            {loading ? "Working…" : todos.length > 0 ? "Hide To-Do" : "Generate To-Do"}
-                                        </button>
+                    {/* Home Tab — Dashboard */}
+                    {activeTab === "home" && !isCoursePage && (
+                        <div className="home-page-view">
+                            <p className="welcome-text">Welcome to <strong>CyAI</strong>!</p>
+                            <p className="welcome-sub">Ask questions, see your To-Do list, or jump to a course.</p>
 
-                                        {todosFetched && (
-                                        <div className={`todo-card ${isDarkMode ? 'dark-mode' : ''}`} style={{marginTop: '10px'}}>
+                            <div className="home-actions">
+
+                                {/* Go to Course */}
+                                <div>
+                                    <button className="generate-button" onClick={getCourses} disabled={loadingCourses} style={{ width: "100%" }}>
+                                        {loadingCourses ? "Loading…" : courses.length > 0 ? "Hide Courses" : "🎓 Go to Course"}
+                                    </button>
+                                    {!loadingCourses && courses.length > 0 && (
+                                        <div className="courses-list">
+                                            <h4>Your Courses:</h4>
+                                            <ul>
+                                                {courses.filter((c) => !hiddenCourses[c.id]).map((course) => (
+                                                    <li key={course.id}>
+                                                        <a href={course.url} target="_blank" rel="noreferrer" className="todo-link">
+                                                            {course.name}
+                                                        </a>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                            {courses.filter((c) => !hiddenCourses[c.id]).length === 0 && (
+                                                <p className="empty-note">All courses are hidden in settings</p>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Generate To-Do */}
+                                <div>
+                                    <button className="generate-button" onClick={generateTodos} disabled={loading} style={{ width: "100%" }}>
+                                        {loading ? "Working…" : todos.length > 0 ? "Hide To-Do" : "📝 Generate To-Do"}
+                                    </button>
+                                    {todosFetched && (
+                                        <div className={`todo-card ${isDarkMode ? "dark-mode" : ""}`}>
                                             <h4 className="todo-header">Top 5 To-Do Items</h4>
                                             <div className="todo-table">
                                                 {loading && <p>Generating…</p>}
-
+                                                {!loading && todos.length === 0 && <p>No upcoming To-Do items found.</p>}
                                                 {!loading && todos.length > 0 && (
                                                     <table>
                                                         <thead>
-                                                            <tr>
-                                                                <th>Title</th>
-                                                                <th>Course</th>
-                                                                <th>Due</th>
-                                                            </tr>
+                                                            <tr><th>Title</th><th>Course</th><th>Due</th></tr>
                                                         </thead>
                                                         <tbody>
                                                             {todos.slice(0, 5).map((t, i) => (
                                                                 <tr key={i}>
                                                                     <td className="todo-title">
-                                                                        {t.url ? (
-                                                                            <a className="todo-link" href={t.url} target="_blank" rel="noreferrer">
-                                                                                {t.title}
-                                                                            </a>
-                                                                        ) : (
-                                                                            t.title
-                                                                        )}
+                                                                        {t.url
+                                                                            ? <a className="todo-link" href={t.url} target="_blank" rel="noreferrer">{t.title}</a>
+                                                                            : t.title}
                                                                     </td>
                                                                     <td className="todo-course">{t.course}</td>
                                                                     <td className="todo-due">{t.due_text}</td>
@@ -481,57 +297,23 @@ ${syllabusText}`;
                                                         </tbody>
                                                     </table>
                                                 )}
-
-                                                {!loading && todos.length === 0 && (
-                                                    <p>No upcoming To-Do items found.</p>
-                                                )}
                                             </div>
                                         </div>
-                                        )}
-                                    </div>
-                                )}
+                                    )}
+                                </div>
 
                             </div>
-                        </>
-                    ) : (
-                        <div>
-                            <h3>Dashboard Settings</h3>
-                            <p style={{fontSize: '12px', color: '#666', marginBottom: '15px'}}>Hide courses from your Canvas dashboard:</p>
-                            
-                            <button className="generate-button" onClick={loadDashboardCourses} style={{width: '100%', marginBottom: '10px'}}>
-                                Load Dashboard Courses
-                            </button>
-                            
-                            {dashboardCourses.length > 0 && (
-                                <div style={{maxHeight: '400px', overflowY: 'auto', fontSize: '12px'}}>
-                                    {dashboardCourses.map((course) => (
-                                        <label key={course.id} style={{display: 'flex', alignItems: 'center', marginBottom: '10px', cursor: 'pointer', padding: '8px', backgroundColor: isDarkMode ? '#333' : '#f5f5f5', borderRadius: '4px'}}>
-                                            <input 
-                                                type="checkbox" 
-                                                checked={!hiddenCourses[course.id]}
-                                                onChange={() => toggleCourseVisibility(course.id)}
-                                                style={{marginRight: '8px', cursor: 'pointer'}}
-                                            />
-                                            <span style={{flex: 1}}>{course.name}</span>
-                                        </label>
-                                    ))}
-                                </div>
-                            )}
-                            
-                            {dashboardCourses.length === 0 && (
-                                <p style={{fontSize: '12px', color: '#666'}}>Click "Load Dashboard Courses" to get started</p>
-                            )}
                         </div>
                     )}
+
                 </div>
+            </div>
 
-        </div>
+            <Chatbot />
 
-        <Chatbot />
-        {/* Footer */}
-        <div className="sidebar-footer">
-          <small>© 2025 TruDesign LLC | v{VERSION}</small>
+            <div className="sidebar-footer">
+                <small>© 2025 TruDesign LLC | v{VERSION}</small>
+            </div>
         </div>
-      </div>
-    )
+    );
 }
