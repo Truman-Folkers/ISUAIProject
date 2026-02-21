@@ -27,14 +27,19 @@ function initSidebar() {
   sidebar.style.zIndex = "999999";
   sidebar.style.transition = "width 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1)";
   sidebar.style.willChange = "width";
+  sidebar.style.pointerEvents = "all";
   sidebar.style.boxShadow = "0px 0 10px rgba(0, 0, 0, 0.15)";
   sidebar.style.backgroundColor = "rgb(255, 255, 250)";
 
   sidebar.addEventListener("mouseenter", () => {
-    sidebar.style.width = "34vh";
+    sidebar.style.width = "clamp(260px, 28vw, 380px)";
+    iframe.style.pointerEvents = "all";
+    iframe.contentWindow?.postMessage({ type: "SIDEBAR_EXPAND" }, "*");
   });
   sidebar.addEventListener("mouseleave", () => {
     sidebar.style.width = "50px";
+    iframe.style.pointerEvents = "none";
+    iframe.contentWindow?.postMessage({ type: "SIDEBAR_COLLAPSE" }, "*");
   });
 
   document.body.appendChild(sidebar);
@@ -48,6 +53,8 @@ function initSidebar() {
   iframe.style.width = "100%";
   iframe.style.height = "100%";
   iframe.style.border = "none";
+  iframe.style.overflow = "hidden";
+  iframe.style.pointerEvents = "none"; // disabled until sidebar expands
 
   iframe.onload = () => {
     console.log("✅ Iframe loaded successfully");
@@ -75,60 +82,85 @@ function initSidebar() {
    Canvas To-Do Scraper
 ========================= */
 
-function scrapeCanvasTodoSidebar() {
-  const list = document.querySelector("#planner-todosidebar-item-list");
-  if (!list) return [];
+async function scrapeCanvasTodoSidebar() {
+  const domain = window.location.origin;
 
-  const items = [...list.querySelectorAll("li")];
+  // --- Strategy 1: Canvas Planner API (most reliable) ---
+  try {
+    const today = new Date().toISOString();
+    const apiUrl = `${domain}/api/v1/planner/items?start_date=${today}&per_page=20&order=asc`;
+    const resp = await fetch(apiUrl, { credentials: "include" });
 
-  return items
-    .map((li) => {
-      const root = li.querySelector(".ToDoSidebarItem") || li;
+    if (resp.ok) {
+      const items = await resp.json();
+      console.log("✅ Planner API returned", items.length, "items");
 
-      // ❌ Skip announcements
-      if (root.querySelector('svg[label="Announcement"]')) return null;
+      return items
+        .filter(item => item.plannable_type !== "announcement")
+        .slice(0, 5)
+        .map(item => {
+          const plannable = item.plannable || {};
+          const courseId = item.course_id || item.plannable?.course_id;
+          const title = plannable.title || item.plannable_id || "Untitled";
+          const dueAt = plannable.due_at || plannable.todo_date || item.plannable_date;
+          const due_text = dueAt
+            ? new Date(dueAt).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })
+            : "No due date";
 
-      const titleLink =
-        root.querySelector(".ToDoSidebarItem__Title a") ||
-        root.querySelector("a");
+          // Build URL from context_name or course_id
+          let url = null;
+          const type = item.plannable_type; // "assignment", "quiz", "discussion_topic", etc.
+          if (courseId && item.plannable_id) {
+            const typeMap = {
+              assignment: "assignments",
+              quiz: "quizzes",
+              discussion_topic: "discussion_topics",
+            };
+            const segment = typeMap[type] || "assignments";
+            url = `${domain}/courses/${courseId}/${segment}/${item.plannable_id}`;
+          }
 
-      if (!titleLink) return null;
+          return {
+            title,
+            course: item.context_name || null,
+            due_text,
+            url,
+          };
+        });
+    }
+    console.warn("⚠️ Planner API failed:", resp.status);
+  } catch (err) {
+    console.warn("⚠️ Planner API error:", err);
+  }
 
-      const href = titleLink.getAttribute("href") || "";
+  // --- Strategy 2: Broader DOM scrape fallback ---
+  console.log("🔄 Falling back to DOM scrape...");
+  const results = [];
+  const seen = new Set();
 
-      // ❌ Only assignments
-      if (!href.includes("/assignments/")) return null;
+  // Try any link that points to an assignment, quiz, or discussion
+  const links = document.querySelectorAll(
+    "a[href*='/assignments/'], a[href*='/quizzes/'], a[href*='/discussion_topics/']"
+  );
 
-      const title =
-        titleLink.querySelector("span")?.innerText?.trim() ||
-        titleLink.innerText?.trim();
+  for (const link of links) {
+    const href = link.getAttribute("href") || "";
+    if (!href || seen.has(href)) continue;
+    seen.add(href);
 
-      const url = new URL(href, window.location.origin).toString();
+    const title = link.innerText?.trim();
+    if (!title) continue;
 
-      const course =
-        root.querySelector(".ToDoSidebarItem__Info > span")?.innerText?.trim() ||
-        null;
+    try {
+      const url = new URL(href, domain).toString();
+      results.push({ title, course: null, due_text: null, url });
+    } catch (_) { /* skip bad URLs */ }
 
-      const infoRow =
-        root.querySelector('[data-testid="ToDoSidebarItem__InformationRow"]') ||
-        root.querySelector(".ToDoSidebarItem__InformationRow");
+    if (results.length >= 5) break;
+  }
 
-      let due_text = null;
-
-      if (infoRow) {
-        const lis = [...infoRow.querySelectorAll("li")];
-
-        const dateLi = lis.find(li =>
-          !li.innerText.toLowerCase().includes("point")
-        );
-
-        due_text = dateLi?.innerText.trim() || null;
-      }
-
-      return { title, course, due_text, url };
-    })
-    .filter(Boolean)
-    .slice(0, 5); // ✅ TOP 5 ONLY
+  console.log("📋 DOM fallback found", results.length, "items");
+  return results;
 }
 
 /* =========================
@@ -437,14 +469,15 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   
   if (msg.type === "SCRAPE_PAGE") {
     console.log("🔄 Processing SCRAPE_PAGE");
-    try {
-      const data = scrapeCanvasTodoSidebar();
-      console.log("✅ SCRAPE_PAGE successful, sending data:", data.length, "items");
-      sendResponse({ success: true, data });
-    } catch (err) {
-      console.error("❌ Scrape failed:", err);
-      sendResponse({ success: false, error: err?.message || String(err) });
-    }
+    scrapeCanvasTodoSidebar()
+      .then(data => {
+        console.log("✅ SCRAPE_PAGE successful, sending data:", data.length, "items");
+        sendResponse({ success: true, data });
+      })
+      .catch(err => {
+        console.error("❌ Scrape failed:", err);
+        sendResponse({ success: false, error: err?.message || String(err) });
+      });
     return true;
   }
   

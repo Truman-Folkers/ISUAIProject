@@ -1,8 +1,10 @@
 /* Add some basic styles for the app layout */
 html, body, #root, .app-container {
+  width: 100%;
   height: 100%;
   margin: 0;
   padding: 0;
+  overflow: hidden;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
 
@@ -11,32 +13,25 @@ html, body, #root, .app-container {
 }
 
 
-/* Base container: full height, fixed to right */
+/* Base container: fills the iframe which is already positioned/sized by contentScript */
 .sidebar-container {
-  position: fixed;       /* stick to page */
-  top: 0;
-  right: 0;
-  border-top-left-radius: 25px;
-  border-bottom-left-radius: 25px;
-  width: 34vh;          /* adjust as needed */
-  height: 100vh;         /* full viewport height */
-  background:  rgb(255, 255, 250);
-  box-shadow: 0px 0 10px rgba(0, 0, 0, 0.15);
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: rgb(255, 255, 250);
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #333;
-  overflow: visible !important;
-  z-index: 999999999;    /* always on top of Canvas content */
-  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-  will-change: width;
+  overflow: hidden;
+  transition: background 0.3s ease;
 }
 
-/* Collapsed state for the sidebar */
+/* Collapsed state — outer iframe is already 50px; just hide content */
 .sidebar-container.collapsed {
-  width: 50px;
   cursor: pointer;
-  background: #f0f0f0; /* Slight grey when collapsed to stand out */ 
+  background: #f0f0f0;
 } 
 
 .sidebar-container.collapsed::after {
@@ -149,7 +144,7 @@ html, body, #root, .app-container {
   color: #666;
   text-align: center;
   border-top: 1px solid #ddd;
-  flex-shrink: 0;       /* keep at bottom */
+  flex-shrink: 0;
   opacity: 1;
   transition: opacity 0.3s ease-in-out;
   border-bottom-left-radius: 25px;
@@ -242,16 +237,16 @@ html, body, #root, .app-container {
   max-width: 100%;
   background: #fafafa;
   border-radius: 14px;
-  padding: 0.75rem 0.75rem 0.5rem;
+  padding: 0.4rem 0.5rem 0.3rem;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
   overflow: hidden; /* prevents spillover */
 }
 
 /* Header */
 .todo-header {
-  font-size: 1rem;
+  font-size: 0.8rem;
   font-weight: 600;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   color: #111;
 }
 
@@ -260,20 +255,20 @@ html, body, #root, .app-container {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed; /* KEY: prevents overflow */
-  font-size: 0.9rem;
+  font-size: 0.72rem;
 }
 
 .todo-table th {
   text-align: left;
   font-weight: 500;
-  font-size: 0.75rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
   color: #666;
-  padding-bottom: 0.4rem;
+  padding-bottom: 0.2rem;
 }
 
 .todo-table td {
-  padding: 0.55rem 0.4rem;
+  padding: 0.25rem 0.3rem;
   vertical-align: top;
 }
 
@@ -298,16 +293,15 @@ html, body, #root, .app-container {
 /* Course (de-emphasized) */
 .todo-course {
   color: #555;
-  font-size: 0.8rem;
+  font-size: 0.65rem;
   word-wrap: break-word;
 }
 
 /* Due date */
 .todo-due {
   font-weight: 500;
-  font-size: 0.8rem;
+  font-size: 0.65rem;
   color: #b45309;
-  /* white-space: nowrap; keeps date tidy */
 }
 /*--------------------------------------------*/
 
@@ -337,7 +331,7 @@ html, body, #root, .app-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   padding: 0;
 }
 
@@ -354,60 +348,103 @@ html, body, #root, .app-container {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   padding: 0;
 }
 
 .settings-toggle:hover {
   background: rgba(255, 255, 255, 0.2);
-  transform: scale(1.05);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .settings-toggle:active {
   transform: scale(0.95);
+  box-shadow: none;
 }
 
 .dark-mode-toggle:hover {
   background: rgba(255, 255, 255, 0.3);
-  transform: scale(1.05);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
 }
 
 .dark-mode-toggle:active {
   transform: scale(0.95);
+  box-shadow: none;
 }
 
 /* Dark mode styles */
 .sidebar-container.dark-mode {
-  background: #1e1e1e;
-  color: #e0e0e0;
+  background: #2d3140;
+  color: #f0f0f0;
 }
 
 .sidebar-container.dark-mode.collapsed {
-  background: #252525;
+  background: #353a4d;
 }
 
 .sidebar-container.dark-mode .sidebar-header {
-  background-color: #5d0f0f;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  background-color: #9b1c1c;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .sidebar-container.dark-mode .sidebar-content {
-  background: #1e1e1e;
+  background: #2d3140;
 }
 
 .sidebar-container.dark-mode .sidebar-content p {
-  color: #b0b0b0;
+  color: #d1d5db;
+}
+
+.sidebar-container.dark-mode h3,
+.sidebar-container.dark-mode h4 {
+  color: #f0f0f0;
 }
 
 .sidebar-container.dark-mode .todo-card {
-  background: #2a2a2a;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+  background: #374151;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
 }
 
+.sidebar-container.dark-mode .todo-header {
+  color: #f0f0f0;
+}
 
+.sidebar-container.dark-mode .todo-table th {
+  color: #9ca3af;
+}
+
+.sidebar-container.dark-mode .todo-table td {
+  color: #e5e7eb;
+}
+
+.sidebar-container.dark-mode .todo-table tr:not(:last-child) {
+  border-bottom-color: #4b5563;
+}
+
+.sidebar-container.dark-mode .todo-link {
+  color: #fca5a5;
+}
+
+.sidebar-container.dark-mode .todo-link:hover {
+  color: #f87171;
+}
+
+.sidebar-container.dark-mode .todo-title a {
+  color: #fca5a5;
+}
+
+.sidebar-container.dark-mode .todo-course {
+  color: #9ca3af;
+}
+
+.sidebar-container.dark-mode .todo-due {
+  color: #fbbf24;
+}
 
 .sidebar-container.dark-mode .card p {
-  color: #b0b0b0;
+  color: #d1d5db;
 }
 
 .sidebar-container.dark-mode .table {
@@ -415,51 +452,73 @@ html, body, #root, .app-container {
 }
 
 .sidebar-container.dark-mode .table th {
-  background-color: #3d3d3d;
-  color: #e0e0e0;
-  border-color: #3d3d3d;
+  background-color: #4b5563;
+  color: #f0f0f0;
+  border-color: #4b5563;
 }
 
 .sidebar-container.dark-mode .table td {
-  background-color: #252525;
-  color: #b0b0b0;
-  border-color: #3d3d3d;
+  background-color: #374151;
+  color: #d1d5db;
+  border-color: #4b5563;
 }
 
 .sidebar-container.dark-mode .sidebar-footer {
-  background: #252525;
-  color: #666;
-  border-top-color: #3d3d3d;
+  background: #353a4d;
+  color: #9ca3af;
+  border-top-color: #4b5563;
 }
 
 .sidebar-container.dark-mode .text-input {
-  background: #2a2a2a;
-  color: #e0e0e0;
-  border-color: #3d3d3d;
+  background: #374151;
+  color: #f0f0f0;
+  border-color: #4b5563;
 }
 
 .sidebar-container.dark-mode .text-input:focus {
-  border-color: #ff6b6b;
-  background: #323232;
+  border-color: #f87171;
+  background: #4b5563;
 }
 
 .sidebar-container.dark-mode .input-button {
-  background-color: #cc0000;
+  background-color: #9b1c1c;
 }
 
 .sidebar-container.dark-mode .input-button:hover {
-  background-color: #ff3333;
+  background-color: #dc2626;
+}
+
+.sidebar-container.dark-mode .courses-list a {
+  color: #fca5a5;
+}
+
+.sidebar-container.dark-mode .courses-list a:hover {
+  color: #f87171;
+}
+
+.sidebar-container.dark-mode label span {
+  color: #e5e7eb;
 }.generate-button{
   background-color: rgb(206, 29, 29);
   color: white;
   border: none;
   border-radius: 25px;
-  padding: 10px 20px;
-  font-size: 16px;
+  padding: 7px 20px;
+  font-size: 14px;
   cursor: pointer;
-  margin-top: 10px;
+  margin-top: 6px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
+.generate-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(206, 29, 29, 0.45);
+}
+
+.generate-button:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(206, 29, 29, 0.3);
+}
 .to-do-header{
   margin-top: 20px;
   font-size: 18px;
