@@ -84,51 +84,39 @@
 //   }
 // }
 
-// src/services/gemini.js
-
-console.log("=== GEMINI DEBUG ===");
-console.log("Key loaded:", !!import.meta.env.VITE_GEMINI_API_KEY);
-
-let apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
-if (!apiKey) {
-  throw new Error("Gemini API key not found in environment variables");
-}
+// src/services/openrouter.js
+const API_KEY = import.meta.env.VITE_OPENROUTER_API_KEY;
 
 export async function askDevStral(prompt) {
-  console.log("askDevStral called with:", prompt.substring(0, 50) + "...");
-
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: prompt }]
-            }
-          ]
-        }),
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`HTTP error ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log("Gemini response:", data);
-
-    return data?.candidates?.[0]?.content?.parts?.[0]?.text
-      || "No response returned.";
-
-  } catch (error) {
-    console.error("FULL ERROR DETAILS:", error);
-    throw new Error(`Gemini API Error: ${error.message}`);
+  if (!API_KEY) {
+    throw new Error("OpenRouter API key not found. Set VITE_OPENROUTER_API_KEY in your .env file.");
   }
+
+  const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "Authorization": `Bearer ${API_KEY}`,
+      "Content-Type": "application/json",
+      "HTTP-Referer": "https://canvas.iastate.edu",
+      "X-Title": "CyAI Extension",
+    },
+    body: JSON.stringify({
+      model: "mistralai/devstral-2512:free",
+      messages: [
+        {
+          role: "system",
+          content: "You are CyAI, a helpful academic assistant for Iowa State University students using Canvas LMS.",
+        },
+        { role: "user", content: prompt },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const err = await response.text();
+    throw new Error(`OpenRouter error ${response.status}: ${err}`);
+  }
+
+  const data = await response.json();
+  return data?.choices?.[0]?.message?.content ?? "No response returned.";
 }
