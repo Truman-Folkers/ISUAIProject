@@ -1,27 +1,29 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Sidebar from "./sidebar.jsx";
 import "./sidebar.css";
 
 export default function App() {
-  // 1. Default to TRUE so it starts collapsed
+  // Default to TRUE so it starts collapsed
   const [isCollapsed, setIsCollapsed] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(false);
 
-  // 2. Define specific handlers for hover
-  const handleMouseEnter = () => {
-    setIsCollapsed(false); // Expand when mouse enters
-  };
-
-  const handleMouseLeave = () => {
-    setIsCollapsed(true);  // Collapse when mouse leaves
-  };
+  // Listen for expand/collapse messages from the content script
+  useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data?.type === "SIDEBAR_EXPAND") {
+        setIsCollapsed(false);
+      } else if (event.data?.type === "SIDEBAR_COLLAPSE") {
+        setIsCollapsed(true);
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
 
   return (
     <div className={`app-container ${isDarkMode ? 'dark-mode' : ''}`}>
       <Sidebar 
         isCollapsed={isCollapsed} 
-        onEnter={handleMouseEnter} 
-        onLeave={handleMouseLeave}
         isDarkMode={isDarkMode}
         setIsDarkMode={setIsDarkMode}
       />

@@ -5,7 +5,7 @@ import Tasklist from "./tasklist.jsx";
 
 const VERSION = "1.0.0";
 
-export default function Sidebar({ isCollapsed, onEnter, onLeave, isDarkMode, setIsDarkMode }){
+export default function Sidebar({ isCollapsed, isDarkMode, setIsDarkMode }){
 
     const [val, setVal] = useState("Ask Cy");
 
@@ -18,6 +18,7 @@ export default function Sidebar({ isCollapsed, onEnter, onLeave, isDarkMode, set
         setVal(event.target.value);
     }
     const [todos, setTodos] = useState([]);
+    const [todosFetched, setTodosFetched] = useState(false);
     const [loading, setLoading] = useState(false);
     const [courses, setCourses] = useState([]);
     const [loadingCourses, setLoadingCourses] = useState(false);
@@ -63,6 +64,13 @@ export default function Sidebar({ isCollapsed, onEnter, onLeave, isDarkMode, set
     }, []);
 
 const generateTodos = async () => {
+  // Toggle: if todos are already shown, collapse the list
+  if (todos.length > 0) {
+    setTodos([]);
+    setTodosFetched(false);
+    return;
+  }
+
   setLoading(true);
 
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -77,17 +85,25 @@ const generateTodos = async () => {
     if (!resp?.success) {
       console.error("Scrape failed:", resp?.error || resp);
       setTodos([]);
+      setTodosFetched(true);
       setLoading(false);
       return;
     }
 
     // Directly display scraped Canvas items
     setTodos(resp.data);
+    setTodosFetched(true);
     setLoading(false);
   });
 };
 
 const getCourses = async () => {
+  // Toggle: if courses are already shown, collapse the list
+  if (courses.length > 0) {
+    setCourses([]);
+    return;
+  }
+
   setLoadingCourses(true);
   console.log("🔍 Getting dashboard courses...");
 
@@ -320,8 +336,6 @@ ${syllabusText}`;
     return(
         <div 
             className={`sidebar-container ${isCollapsed ? 'collapsed' : ''} ${isDarkMode ? 'dark-mode' : ''}`}
-            onMouseEnter={onEnter}
-            onMouseLeave={onLeave}
         >
 
             <div className="sidebar-content-wrapper">
@@ -386,112 +400,96 @@ ${syllabusText}`;
                                 </>
                             )}
 
-                            <div className="separator">
-                            <div className="left-side">
-                            {/* <div className="table">
-                                <thead>
-                                    <tr>
-                                        <th>Upcoming Assignments</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <th>Assignment 1</th>
-                                    </tr>
-                                </tbody>
-                                <tbody>
-                                    <tr>
-                                        <th>Assignment 2</th>
-                                    </tr>
-                                </tbody>
-                            </div>
-                            </div> */}
-                            {!isCoursePage && (
-                                <button className = "generate-button" onClick={generateTodos} disabled={loading}>
-                                    {loading ? "Working…" : "Generate To-Do"}
-                                </button>
-                            )}
+                            <div style={{display: 'flex', flexDirection: 'column', gap: '12px'}}>
 
-                    <div className = {`todo-card  ${isDarkMode ? 'dark-mode' : ''}`}>
-                        <h4 className = "todo-header">Top 5 To-Do Items</h4>
-                        <div className="todo-table">
-                            {loading && <p>Generating…</p>}
-
-                            {!loading && todos.length > 0 && (
-                                <table>
-                                <thead>
-                                    <tr>
-                                    <th>Title</th>
-                                    <th>Course</th>
-                                    <th>Due</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {todos.slice(0,5).map((t, i) => (
-                                    <tr key={i}>
-                                        <td className = "todo-title">
-                                        {t.url ? (
-                                            <a className = "todo-link" href={t.url} target="_blank" rel="noreferrer">
-                                            {t.title}
-                                            </a>
-                                        ) : (
-                                            t.title
-                                        )}
-                                        </td>
-                                        <td className = "todo-course">{t.course}</td>
-                                        <td className = "todo-due">{t.due_text}</td>
-                                    </tr>
-                                    ))}
-                                </tbody>
-                                </table>
-                            )}
-
-                            {!loading && todos.length === 0 && (
-                                <p>No To Do items found on this page.</p>
-                            )}
-                        </div>
-                    </div>
-
-
-                            </div>
-                            
-
-                            <div className="right-side">
+                                {/* Go to Course section */}
                                 {!isCoursePage && (
-                                    <button className="generate-button" onClick={getCourses} disabled={loadingCourses} style={{width: '100%', marginBottom: '10px'}}>
-                                        {loadingCourses ? "Loading…" : "Go to Course"}
-                                    </button>
-                                )}
-                                
-                                {loadingCourses && <p>Loading courses…</p>}
-                                
-                                {!loadingCourses && courses.length > 0 && (
-                                    <div className="courses-list">
-                                        <h4 style={{marginTop: '0', marginBottom: '10px'}}>Your Courses:</h4>
-                                        <ul style={{listStyle: 'none', padding: 0, margin: 0}}>
-                                            {courses.filter(course => !hiddenCourses[course.id]).map((course) => (
-                                                <li key={course.id} style={{marginBottom: '8px'}}>
-                                                    <a 
-                                                        href={course.url} 
-                                                        target="_blank" 
-                                                        rel="noreferrer"
-                                                        className="todo-link"
-                                                    >
-                                                        {course.name}
-                                                    </a>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                        {courses.filter(course => !hiddenCourses[course.id]).length === 0 && (
-                                            <p style={{fontSize: '11px', color: '#999', marginTop: '8px'}}>All courses are hidden in settings</p>
+                                    <div>
+                                        <button className="generate-button" onClick={getCourses} disabled={loadingCourses} style={{width: '100%'}}>
+                                            {loadingCourses ? "Loading…" : courses.length > 0 ? "Hide Courses" : "Go to Course"}
+                                        </button>
+
+                                        {loadingCourses && <p>Loading courses…</p>}
+
+                                        {!loadingCourses && courses.length > 0 && (
+                                            <div className="courses-list" style={{marginTop: '10px'}}>
+                                                <h4 style={{marginTop: '0', marginBottom: '10px'}}>Your Courses:</h4>
+                                                <ul style={{listStyle: 'none', padding: 0, margin: 0}}>
+                                                    {courses.filter(course => !hiddenCourses[course.id]).map((course) => (
+                                                        <li key={course.id} style={{marginBottom: '8px'}}>
+                                                            <a
+                                                                href={course.url}
+                                                                target="_blank"
+                                                                rel="noreferrer"
+                                                                className="todo-link"
+                                                            >
+                                                                {course.name}
+                                                            </a>
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                                {courses.filter(course => !hiddenCourses[course.id]).length === 0 && (
+                                                    <p style={{fontSize: '11px', color: '#999', marginTop: '8px'}}>All courses are hidden in settings</p>
+                                                )}
+                                            </div>
+                                        )}
+
+                                        {!loadingCourses && courses.length === 0 && (
+                                            <p style={{fontSize: '12px', color: '#666', marginTop: '10px'}}>Click button to load courses</p>
                                         )}
                                     </div>
                                 )}
-                                
-                                {!loadingCourses && courses.length === 0 && !isCoursePage && (
-                                    <p style={{fontSize: '12px', color: '#666', marginTop: '10px'}}>Click button to load courses</p>
+
+                                {/* Generate To-Do section */}
+                                {!isCoursePage && (
+                                    <div>
+                                        <button className="generate-button" onClick={generateTodos} disabled={loading} style={{width: '100%'}}>
+                                            {loading ? "Working…" : todos.length > 0 ? "Hide To-Do" : "Generate To-Do"}
+                                        </button>
+
+                                        {todosFetched && (
+                                        <div className={`todo-card ${isDarkMode ? 'dark-mode' : ''}`} style={{marginTop: '10px'}}>
+                                            <h4 className="todo-header">Top 5 To-Do Items</h4>
+                                            <div className="todo-table">
+                                                {loading && <p>Generating…</p>}
+
+                                                {!loading && todos.length > 0 && (
+                                                    <table>
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Title</th>
+                                                                <th>Course</th>
+                                                                <th>Due</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {todos.slice(0, 5).map((t, i) => (
+                                                                <tr key={i}>
+                                                                    <td className="todo-title">
+                                                                        {t.url ? (
+                                                                            <a className="todo-link" href={t.url} target="_blank" rel="noreferrer">
+                                                                                {t.title}
+                                                                            </a>
+                                                                        ) : (
+                                                                            t.title
+                                                                        )}
+                                                                    </td>
+                                                                    <td className="todo-course">{t.course}</td>
+                                                                    <td className="todo-due">{t.due_text}</td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                )}
+
+                                                {!loading && todos.length === 0 && (
+                                                    <p>No upcoming To-Do items found.</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        )}
+                                    </div>
                                 )}
-                            </div>
 
                             </div>
                         </>
