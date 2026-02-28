@@ -99,32 +99,36 @@ console.log("=== GEMINI DEBUG ===");
 //   throw new Error("Gemini API key not found in environment variables");
 // }
 const PROXY_URL = 'https://gemini-proxy.cyai.workers.dev';
-const EXTENSION_SECRET = 'your-uuid-secret-here';
+const EXTENSION_SECRET = 'e61dac77-116d-49f3-959f-e79721d1626c';
 
 export async function askDevStral(prompt) {
 
 
-  try {
-    const response = await fetch(PROXY_URL, {    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Extension-Secret': EXTENSION_SECRET,
-    },
-    body: JSON.stringify({
-      model: 'gemini-2.5-flash',
-      max_tokens: 1024,
-      messages,
-      role: "user",
-      parts: [{ text: prompt }]
-    }),
-  });
+    const response = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Extension-Secret': EXTENSION_SECRET,
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            role: 'user',
+            parts: [{ text: prompt }]
+          }
+        ]
+      }),
+    });
 
-  return await response.json();
-}
-catch(error) {
-    console.error("FULL ERROR DETAILS:", error);
-    throw new Error(`Gemini API Error: ${error.message}`);
-  }
+    if (!response.ok) {
+      throw new Error(`HTTP error ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('Gemini response:', data);
+
+    return data?.candidates?.[0]?.content?.parts?.[0]?.text
+      || 'No response returned.';
 }
   //     `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
   //     {

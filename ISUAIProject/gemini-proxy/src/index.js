@@ -28,18 +28,17 @@ export default {
 		try {
 		const body = await request.json();
 
-		const anthropicRes = await fetch('https://api.anthropic.com/v1/messages', {
+		const geminiRes = await fetch(
+		`https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${env.GEMINI_API_KEY}`,
+		{
 			method: 'POST',
-			headers: {
-			'Content-Type': 'application/json',
-			'x-api-key': env.ANTHROPIC_API_KEY,
-			'anthropic-version': '2023-06-01',
-			},
+			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(body),
-		});
+		}
+		);
 
-		const data = await anthropicRes.json();
-		return corsResponse(data, anthropicRes.status);
+		const data = await geminiRes.json();
+		return corsResponse(data, geminiRes.status);
 
 		} catch (err) {
 		return corsResponse({ error: 'Proxy error', detail: err.message }, 500);
