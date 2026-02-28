@@ -86,49 +86,74 @@
 
 // src/services/gemini.js
 
+
+
+
+
 console.log("=== GEMINI DEBUG ===");
-console.log("Key loaded:", !!import.meta.env.VITE_GEMINI_API_KEY);
+// console.log("Key loaded:", !!import.meta.env.VITE_GEMINI_API_KEY);
 
-let apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+// let apiKey = import.meta.env.VITE_GEMINI_API_KEY;
 
-if (!apiKey) {
-  throw new Error("Gemini API key not found in environment variables");
-}
+// if (!apiKey) {
+//   throw new Error("Gemini API key not found in environment variables");
+// }
+const PROXY_URL = 'https://gemini-proxy.cyai.workers.dev';
+const EXTENSION_SECRET = 'your-uuid-secret-here';
 
 export async function askDevStral(prompt) {
-  console.log("askDevStral called with:", prompt.substring(0, 50) + "...");
+
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: "user",
-              parts: [{ text: prompt }]
-            }
-          ]
-        }),
-      }
-    );
+    const response = await fetch(PROXY_URL, {    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Extension-Secret': EXTENSION_SECRET,
+    },
+    body: JSON.stringify({
+      model: 'gemini-2.5-flash',
+      max_tokens: 1024,
+      messages,
+      role: "user",
+      parts: [{ text: prompt }]
+    }),
+  });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error ${response.status}`);
-    }
-
-    const data = await response.json();
-    console.log("Gemini response:", data);
-
-    return data?.candidates?.[0]?.content?.parts?.[0]?.text
-      || "No response returned.";
-
-  } catch (error) {
+  return await response.json();
+}
+catch(error) {
     console.error("FULL ERROR DETAILS:", error);
     throw new Error(`Gemini API Error: ${error.message}`);
   }
 }
+  //     `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
+  //     {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         contents: [
+  //           {
+  //             role: "user",
+  //             parts: [{ text: prompt }]
+  //           }
+  //         ]
+  //       }),
+  //     }
+  //   );
+
+  //   if (!response.ok) {
+  //     throw new Error(`HTTP error ${response.status}`);
+  //   }
+
+  //   const data = await response.json();
+  //   console.log("Gemini response:", data);
+
+  //   return data?.candidates?.[0]?.content?.parts?.[0]?.text
+  //     || "No response returned.";
+
+  // } catch (error) {
+  //   console.error("FULL ERROR DETAILS:", error);
+  //   throw new Error(`Gemini API Error: ${error.message}`);
+  // }const response = await fetch(PROXY_URL, {
