@@ -230,6 +230,54 @@ ${resp.data}`;
                                         className={`syllabus-output ${isDarkMode ? "dark" : ""}`}
                                     />
                                 )}
+                                <div>
+                              <h3>Generate To-Do List</h3>
+                              <button className="generate-button" onClick={generateTodos} disabled={loading} style={{width: '100%'}}>
+                                {loading ? "Working…" : todos.length > 0 ? "Hide To-Do" : "Generate To-Do"}
+                              </button>
+
+                              {todosFetched && (
+                                <div className={`todo-card ${isDarkMode ? 'dark-mode' : ''}`} style={{marginTop: '10px'}}>
+                                  <h4 className="todo-header">Top 5 To-Do Items</h4>
+                                    <div className="todo-table">
+                                      {loading && <p>Generating…</p>}
+
+                                      {!loading && todos.length > 0 && (
+                                      <table>
+                                        <thead>
+                                          <tr>
+                                            <th>Title</th>
+                                            <th>Course</th>
+                                            <th>Due</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody>
+                                          {todos.slice(0, 5).map((t, i) => (
+                                          <tr key={i}>
+                                            <td className="todo-title">
+                                              {t.url ? (
+                                              <a className="todo-link" href={t.url} target="_blank" rel="noreferrer">
+                                                {t.title}
+                                              </a>
+                                              ) : (
+                                                t.title
+                                              )}
+                                            </td>
+                                            <td className="todo-course">{t.course}</td>
+                                            <td className="todo-due">{t.due_text}</td>
+                                          </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                      )}
+
+                                      {!loading && todos.length === 0 && (
+                                        <p>No upcoming To-Do items found.</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  )}
+                                </div>
                             </div>
                         </div>
                     )}
