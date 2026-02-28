@@ -67,7 +67,13 @@ async function scrapeCanvasTodoSidebar() {
     if (resp.ok) {
       const items = await resp.json();
       return items
-        .filter((item) => item.plannable_type !== "announcement")
+        .filter(item => {
+          if(window.location.pathname.includes("/courses/")){
+            return item.course_id === Number(window.location.pathname.match(/\/courses\/(\d+)/)[1]) && item.plannable_type !== "announcement";
+          }else{
+            return item.plannable_type !== "announcement";
+          }
+        })
         .slice(0, 5)
         .map((item) => {
           const plannable = item.plannable || {};
