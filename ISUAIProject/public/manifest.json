@@ -4,7 +4,7 @@
   "version": "1.0",
   "description": "AI-powered sidebar for Canvas LMS",
   "permissions": ["storage", "activeTab", "scripting"],
-  "host_permissions": ["https://canvas.iastate.edu/*", "https://my-ai-proxy.yourname.workers.dev/*"],
+  "host_permissions": ["https://canvas.iastate.edu/*", "https://gemini-proxy.cyai.workers.dev/*"],
   "background": {
     "service_worker": "assets/background.js"
   },
