@@ -9,16 +9,16 @@
     "service_worker": "assets/background.js"
   },
     "icons": {
-    "16": "icons/CyAILogo16.png",
-      "48": "icons/CyAILogo48.png",
-      "128": "icons/CyAILogo128.png"
+    "16": "icons/CyAILogo16[2].png",
+      "48": "icons/CyAILogo48[2].png",
+      "128": "icons/CyAILogo128[2].png"
   },
 
   "action": {
     "default_icon": {
-      "16": "icons/CyAILogo16.png",
-      "48": "icons/CyAILogo48.png",
-      "128": "icons/CyAILogo128.png"
+      "16": "icons/CyAILogo16[2].png",
+      "48": "icons/CyAILogo48[2].png",
+      "128": "icons/CyAILogo128[2].png"
     }
   },
 
