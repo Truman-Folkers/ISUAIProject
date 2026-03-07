@@ -10,9 +10,7 @@ export default function Sidebar({ isCollapsed, isDarkMode, setIsDarkMode }) {
   const [activeTab, setActiveTab] = useState("home");
 
   const [todos, setTodos] = useState([]);
-  const [todosFetched, setTodosFetched] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [courses, setCourses] = useState([]);
   const [loadingCourses, setLoadingCourses] = useState(false);
 
   const [dashboardCourses, setDashboardCourses] = useState([]);
@@ -123,9 +121,9 @@ export default function Sidebar({ isCollapsed, isDarkMode, setIsDarkMode }) {
   const generateTodos = async () => {
     if (todos.length > 0) {
       setTodos([]);
-      setTodosFetched(false);
       return;
     }
+
     setLoading(true);
     try {
       const resp = await sendTabMessage("SCRAPE_PAGE");
@@ -133,28 +131,18 @@ export default function Sidebar({ isCollapsed, isDarkMode, setIsDarkMode }) {
     } catch (err) {
       console.error("generateTodos error:", err);
       setTodos([]);
+    } finally {
+      setLoading(false);
     }
-    setTodosFetched(true);
-    setLoading(false);
-  };
-
-  const getCourses = async () => {
-    if (courses.length > 0) {
-      setCourses([]);
-      return;
-    }
-    setLoadingCourses(true);
-    try {
-      const resp = await sendTabMessage("GET_DASHBOARD_COURSES");
-      setCourses(resp?.success ? resp.data : []);
-    } catch (err) {
-      console.error("getCourses error:", err);
-      setCourses([]);
-    }
-    setLoadingCourses(false);
   };
 
   const loadDashboardCourses = async () => {
+    if (dashboardCourses.length > 0) {
+      setDashboardCourses([]);
+      return;
+    }
+
+    setLoadingCourses(true);
     try {
       const resp = await sendTabMessage("GET_DASHBOARD_COURSES");
       if (resp?.success) {
@@ -165,6 +153,9 @@ export default function Sidebar({ isCollapsed, isDarkMode, setIsDarkMode }) {
       }
     } catch (err) {
       console.error("loadDashboardCourses error:", err);
+      setDashboardCourses([]);
+    } finally {
+      setLoadingCourses(false);
     }
   };
 
@@ -269,65 +260,69 @@ export default function Sidebar({ isCollapsed, isDarkMode, setIsDarkMode }) {
           )}
 
           {activeTab === "home" && isCoursePage && (
-            <div className="course-page-view">
-              {syncPanel}
-              <div className="course-page-card">
-                <h3>Course Tools</h3>
-                <p className="course-page-subtitle">You are viewing a course. Use the tools below to help you study.</p>
-                <button className="generate-button" onClick={summarizeSyllabus} disabled={summarizing} style={{ width: "100%" }}>
-                  {summarizing ? "Summarizing..." : "Summarize Syllabus"}
-                </button>
-                {syllabusContent && <textarea value={syllabusContent} readOnly className={`syllabus-output ${isDarkMode ? "dark" : ""}`} />}
+            <div className="home-page-view">
+              <div className="cyai-widget-container">
+                <div className="cyai-actions-row">
+                  <button className="generate-button" onClick={syncCanvasData} disabled={syncingCanvas}>
+                    {syncingCanvas ? "Syncing..." : "Sync Canvas Data"}
+                  </button>
+                  <button className="generate-button" onClick={summarizeSyllabus} disabled={summarizing}>
+                    {summarizing ? "Summarizing..." : "Summarize Syllabus"}
+                  </button>
+                </div>
+
+                {syllabusContent && (
+                  <div className="cyai-action-results">
+                    <div className="cyai-result-card">
+                      <h4>Syllabus Summary</h4>
+                      <textarea value={syllabusContent} readOnly className={`syllabus-output ${isDarkMode ? "dark" : ""}`} />
+                    </div>
+                  </div>
+                )}
+
+                <Chatbot />
               </div>
             </div>
           )}
 
           {activeTab === "home" && !isCoursePage && (
             <div className="home-page-view">
-              <p className="welcome-text">
-                Welcome to <strong>CyAI</strong>!
-              </p>
-              <p className="welcome-sub">Ask questions, sync Canvas data, see your To-Do list, or jump to a course.</p>
-
-              {syncPanel}
-
-              <div className="home-actions">
-                <div>
-                  <button className="generate-button" onClick={getCourses} disabled={loadingCourses} style={{ width: "100%" }}>
-                    {loadingCourses ? "Loading..." : courses.length > 0 ? "Hide Courses" : "Go to Course"}
+              <div className="cyai-widget-container">
+                <div className="cyai-actions-row">
+                  <button className="generate-button" onClick={syncCanvasData} disabled={syncingCanvas}>
+                    {syncingCanvas ? "Syncing..." : "Sync Canvas Data"}
                   </button>
-                  {!loadingCourses && courses.length > 0 && (
-                    <div className="courses-list">
-                      <h4>Your Courses:</h4>
-                      <ul>
-                        {courses
-                          .filter((c) => !hiddenCourses[c.id])
-                          .map((course) => (
-                            <li key={course.id}>
-                              <a href={course.url} target="_blank" rel="noreferrer" className="todo-link">
-                                {course.name}
-                              </a>
-                            </li>
-                          ))}
-                      </ul>
-                      {courses.filter((c) => !hiddenCourses[c.id]).length === 0 && (
-                        <p className="empty-note">All courses are hidden in settings</p>
-                      )}
-                    </div>
-                  )}
+                  <button className="generate-button" onClick={loadDashboardCourses} disabled={loadingCourses}>
+                    {loadingCourses ? "Loading..." : dashboardCourses.length > 0 ? "Hide Dashboard Courses" : "Load Dashboard Courses"}
+                  </button>
+                  <button className="generate-button" onClick={generateTodos} disabled={loading}>
+                    {loading ? "Loading..." : todos.length > 0 ? "Hide To-Do" : "Load To-Do"}
+                  </button>
                 </div>
 
-                <div>
-                  <button className="generate-button" onClick={generateTodos} disabled={loading} style={{ width: "100%" }}>
-                    {loading ? "Working..." : todos.length > 0 ? "Hide To-Do" : "Generate To-Do"}
-                  </button>
-                  {todosFetched && (
-                    <div className={`todo-card ${isDarkMode ? "dark-mode" : ""}`}>
-                      <h4 className="todo-header">Top 5 To-Do Items</h4>
-                      <div className="todo-table">
-                        {loading && <p>Generating...</p>}
-                        {!loading && todos.length === 0 && <p>No upcoming To-Do items found.</p>}
-                        {!loading && todos.length > 0 && (
+                {(dashboardCourses.length > 0 || todos.length > 0) && (
+                  <div className="cyai-action-results">
+                    {dashboardCourses.length > 0 && (
+                      <div className="cyai-result-card">
+                        <h4>Dashboard Courses</h4>
+                        <ul className="cyai-course-list">
+                          {dashboardCourses
+                            .filter((course) => !hiddenCourses[course.id])
+                            .map((course) => (
+                              <li key={course.id}>
+                                <a href={course.url} target="_blank" rel="noreferrer" className="todo-link">
+                                  {course.name}
+                                </a>
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {todos.length > 0 && (
+                      <div className={`todo-card ${isDarkMode ? "dark-mode" : ""}`}>
+                        <h4 className="todo-header">Top 5 To-Do Items</h4>
+                        <div className="todo-table">
                           <table>
                             <thead>
                               <tr>
@@ -354,18 +349,18 @@ export default function Sidebar({ isCollapsed, isDarkMode, setIsDarkMode }) {
                               ))}
                             </tbody>
                           </table>
-                        )}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
+
+                <Chatbot />
               </div>
             </div>
           )}
         </div>
       </div>
-
-      <Chatbot />
 
       <div className="sidebar-footer">
         <small>Copyright 2026 TruDesign LLC | v{VERSION}</small>

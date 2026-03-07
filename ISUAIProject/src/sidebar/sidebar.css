@@ -340,15 +340,6 @@ html, body, #root, .app-container {
   color: #9ca3af;
   border-top-color: #4b5563;
 }
-
-.sidebar-container.dark-mode .courses-list a {
-  color: #fca5a5;
-}
-
-.sidebar-container.dark-mode .courses-list a:hover {
-  color: #f87171;
-}
-
 .sidebar-container.dark-mode label span {
   color: #e5e7eb;
 }
@@ -394,13 +385,41 @@ html, body, #root, .app-container {
 }
 
 /* Ã¢â€â‚¬Ã¢â€â‚¬ Home view Ã¢â€â‚¬Ã¢â€â‚¬ */
-.welcome-text { margin: 0 0 4px; font-size: 14px; }
-.welcome-sub  { margin: 0 0 12px; font-size: 12px; opacity: 0.8; }
-.home-actions { display: flex; flex-direction: column; gap: 12px; }
-.courses-list h4 { margin: 0 0 8px; }
-.courses-list ul { list-style: none; padding: 0; margin: 0; }
-.courses-list li { margin-bottom: 6px; }
-.empty-note   { font-size: 11px; color: #999; margin-top: 6px; }
+
+.home-page-view {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.cyai-widget-container {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #fffdfa;
+}
+
+.cyai-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid #eceff3;
+  flex: 0 0 auto;
+}
+
+.cyai-actions-row .generate-button {
+  margin-top: 0;
+  padding: 6px 10px;
+  font-size: 12px;
+  border-radius: 10px;
+  flex: 1 1 calc(33.333% - 8px);
+}
 
 /* Ã¢â€â‚¬Ã¢â€â‚¬ Course page view Ã¢â€â‚¬Ã¢â€â‚¬ */
 .course-page-card {
@@ -574,3 +593,64 @@ html, body, #root, .app-container {
 .sidebar-container.dark-mode .sync-status {
   color: #fca5a5;
 }
+
+.sidebar-container.dark-mode .cyai-widget-container {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.sidebar-container.dark-mode .cyai-actions-row {
+  border-bottom-color: #374151;
+}
+
+
+
+.cyai-action-results {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 0 12px 10px;
+  max-height: 180px;
+  overflow-y: auto;
+  border-bottom: 1px solid #eceff3;
+}
+
+.cyai-result-card {
+  background: #fafafa;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 8px;
+}
+
+.cyai-result-card h4 {
+  margin: 0 0 6px;
+  font-size: 12px;
+}
+
+.cyai-course-list {
+  margin: 0;
+  padding-left: 16px;
+}
+
+.cyai-course-list li {
+  margin-bottom: 4px;
+}
+
+.sidebar-container.dark-mode .cyai-action-results {
+  border-bottom-color: #374151;
+}
+
+.sidebar-container.dark-mode .cyai-result-card {
+  background: #253042;
+  border-color: #374151;
+}
+
+.sidebar-container.dark-mode .cyai-course-list a {
+  color: #fca5a5;
+}
+
+.cyai-action-results .syllabus-output {
+  height: 180px;
+  margin-top: 0;
+}
+
