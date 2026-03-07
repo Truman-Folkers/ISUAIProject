@@ -526,3 +526,51 @@ html, body, #root, .app-container {
   }
 }
 
+
+.sync-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sync-card.dark {
+  background: #253042;
+  border-color: #3b4a61;
+}
+
+.sync-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sync-card-header .generate-button {
+  margin-top: 0;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.sync-line {
+  margin: 0;
+  font-size: 11px;
+  color: #4b5563;
+}
+
+.sync-status {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: #991b1b;
+}
+
+.sidebar-container.dark-mode .sync-line {
+  color: #cbd5e1;
+}
+
+.sidebar-container.dark-mode .sync-status {
+  color: #fca5a5;
+}

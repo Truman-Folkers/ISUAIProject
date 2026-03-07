@@ -1,3 +1,4 @@
+import { handleCanvasSyncMessage } from "./canvasSync.js";
 // CyAI Content Script
 
 if (!document.body) {
@@ -368,7 +369,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
     return true;
   }
+  if (handleCanvasSyncMessage(msg, sendResponse, scrapeDashboardCourses)) return true;
   return false;
 });
+
+
+
 
 
