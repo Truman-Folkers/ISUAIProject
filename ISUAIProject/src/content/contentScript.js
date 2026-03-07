@@ -120,7 +120,7 @@ function initSidebar() {
 
   const launcherIcon = document.createElement("img");
   launcherIcon.id = "ai-launcher-icon";
-  launcherIcon.src = chrome.runtime.getURL("icons/CyAILogo[Reg].png");
+  launcherIcon.src = chrome.runtime.getURL("assets/CyAILogo[Reg].png");
   launcherIcon.alt = "CyAI";
   launcher.appendChild(launcherIcon);
 
