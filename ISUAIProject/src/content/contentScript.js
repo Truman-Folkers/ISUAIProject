@@ -1,3 +1,4 @@
+import { handleCanvasSyncMessage } from "./canvasSync.js";
 // CyAI Content Script
 
 if (!document.body) {
@@ -7,50 +8,152 @@ if (!document.body) {
 }
 
 function initSidebar() {
+  if (document.getElementById("ai-widget-root")) return;
+
+  if (!document.getElementById("cyai-widget-styles")) {
+    const style = document.createElement("style");
+    style.id = "cyai-widget-styles";
+    style.textContent = `
+      #ai-widget-root {
+        position: fixed;
+        right: 10px;
+        bottom: 10px;
+        z-index: 999999;
+        pointer-events: none;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-end;
+      }
+      #ai-sidebar-root {
+        width: clamp(340px, 24vw, 380px);
+        height: clamp(470px, 60vh, 560px);
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid rgba(30, 41, 59, 0.14);
+        background: #fffdfa;
+        box-shadow: 0 20px 48px rgba(15, 23, 42, 0.22);
+        transform-origin: bottom right;
+        transition: opacity 180ms ease, transform 220ms ease, visibility 220ms ease;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(10px) scale(0.98);
+        pointer-events: none;
+        margin-bottom: 14px;
+      }
+      #ai-widget-root.open #ai-sidebar-root {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0) scale(1);
+        pointer-events: auto;
+      }
+      #ai-launcher-button {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        border: 1px solid rgba(30, 41, 59, 0.18);
+        background: linear-gradient(140deg, #b91c1c 0%, #991b1b 70%, #7f1d1d 100%);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        box-shadow: 0 10px 26px rgba(127, 29, 29, 0.38);
+        pointer-events: auto;
+        transition: transform 170ms ease, box-shadow 170ms ease, filter 170ms ease;
+        padding: 0;
+      }
+      #ai-launcher-button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 32px rgba(127, 29, 29, 0.45);
+        filter: brightness(1.03);
+      }
+      #ai-launcher-button:active {
+        transform: translateY(0);
+      }
+      #ai-launcher-button:focus-visible {
+        outline: 3px solid rgba(255, 255, 255, 0.85);
+        outline-offset: 2px;
+      }
+      #ai-launcher-icon {
+        width: 28px;
+        height: 28px;
+        object-fit: contain;
+      }
+      #ai-sidebar-iframe {
+        width: 100%;
+        height: 100%;
+        border: none;
+      }
+      @media (max-width: 768px) {
+        #ai-widget-root {
+          right: 12px;
+          bottom: 12px;
+        }
+        #ai-sidebar-root {
+          width: 90vw;
+          height: 70vh;
+          max-width: 380px;
+          max-height: 560px;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  const widgetRoot = document.createElement("div");
+  widgetRoot.id = "ai-widget-root";
+
   const sidebar = document.createElement("div");
   sidebar.id = "ai-sidebar-root";
-  sidebar.style.position = "fixed";
-  sidebar.style.top = "0";
-  sidebar.style.right = "0";
-  sidebar.style.width = "50px";
-  sidebar.style.height = "100vh";
-  sidebar.style.borderTopLeftRadius = "25px";
-  sidebar.style.borderBottomLeftRadius = "25px";
-  sidebar.style.zIndex = "999999";
-  sidebar.style.transition = "width 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s cubic-bezier(0.4, 0, 0.2, 1)";
-  sidebar.style.willChange = "width";
-  sidebar.style.pointerEvents = "all";
-  sidebar.style.boxShadow = "0px 0 10px rgba(0, 0, 0, 0.15)";
-  sidebar.style.backgroundColor = "rgb(255, 255, 250)";
 
   const iframeUrl = chrome.runtime.getURL("src/sidebar/index.html");
   const iframe = document.createElement("iframe");
+  iframe.id = "ai-sidebar-iframe";
   iframe.src = iframeUrl;
-  iframe.style.width = "100%";
-  iframe.style.height = "100%";
-  iframe.style.border = "none";
   iframe.style.overflow = "hidden";
   iframe.style.pointerEvents = "none";
 
-  sidebar.addEventListener("mouseenter", () => {
-    sidebar.style.width = "clamp(260px, 28vw, 380px)";
-    iframe.style.pointerEvents = "all";
-    iframe.contentWindow?.postMessage({ type: "SIDEBAR_EXPAND" }, "*");
-  });
-  sidebar.addEventListener("mouseleave", () => {
-    sidebar.style.width = "50px";
-    iframe.style.pointerEvents = "none";
-    iframe.contentWindow?.postMessage({ type: "SIDEBAR_COLLAPSE" }, "*");
-  });
+  const launcher = document.createElement("button");
+  launcher.id = "ai-launcher-button";
+  launcher.type = "button";
+  launcher.setAttribute("aria-label", "Toggle CyAI assistant");
+  launcher.setAttribute("title", "CyAI");
+
+  const launcherIcon = document.createElement("img");
+  launcherIcon.id = "ai-launcher-icon";
+  launcherIcon.src = chrome.runtime.getURL("icons/CyAILogo[Reg].png");
+  launcherIcon.alt = "CyAI";
+  launcher.appendChild(launcherIcon);
 
   sidebar.appendChild(iframe);
-  document.body.appendChild(sidebar);
+  widgetRoot.appendChild(sidebar);
+  widgetRoot.appendChild(launcher);
+  document.body.appendChild(widgetRoot);
+
+  let isOpen = false;
+  const syncWidgetState = () => {
+    widgetRoot.classList.toggle("open", isOpen);
+    iframe.style.pointerEvents = isOpen ? "all" : "none";
+    iframe.contentWindow?.postMessage({ type: isOpen ? "SIDEBAR_EXPAND" : "SIDEBAR_COLLAPSE" }, "*");
+  };
+
+  launcher.addEventListener("click", () => {
+    isOpen = !isOpen;
+    syncWidgetState();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && isOpen) {
+      isOpen = false;
+      syncWidgetState();
+    }
+  });
+
+  syncWidgetState();
 
   chrome.storage.sync.get("hiddenCourses", (data) => {
     if (data.hiddenCourses) applyDashboardCourseVisibility(data.hiddenCourses);
   });
 }
-
 /* =========================
    Canvas To-Do Scraper
 ========================= */
@@ -272,5 +375,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
     }
     return true;
   }
+  if (handleCanvasSyncMessage(msg, sendResponse, scrapeDashboardCourses)) return true;
   return false;
 });
+
+
+
+
+

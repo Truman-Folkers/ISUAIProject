@@ -25,7 +25,7 @@ html, body, #root, .app-container {
   transition: background 0.3s ease;
 }
 
-/* Collapsed state — outer iframe is already 50px; just hide content */
+/* Collapsed state Ã¢â‚¬â€ outer iframe is already 50px; just hide content */
 .sidebar-container.collapsed {
   cursor: pointer;
   background: #f0f0f0;
@@ -374,7 +374,7 @@ html, body, #root, .app-container {
   transform: translateY(0);
   box-shadow: 0 2px 6px rgba(206, 29, 29, 0.3);
 }
-/* ── Page Context Banner ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Page Context Banner Ã¢â€â‚¬Ã¢â€â‚¬ */
 .page-context-banner {
     font-size: 11px;
     font-weight: 600;
@@ -388,12 +388,12 @@ html, body, #root, .app-container {
 .home-banner   { background: rgba(255,255,255,0.15); color: #fff; }
 .course-banner { background: rgba(255,220,100,0.25); color: #ffe58a; }
 
-/* ── Course header tint ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Course header tint Ã¢â€â‚¬Ã¢â€â‚¬ */
 .course-header {
     background: linear-gradient(135deg, #7f1d1d 0%, #9b1c1c 60%, #b45309 100%) !important;
 }
 
-/* ── Home view ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Home view Ã¢â€â‚¬Ã¢â€â‚¬ */
 .welcome-text { margin: 0 0 4px; font-size: 14px; }
 .welcome-sub  { margin: 0 0 12px; font-size: 12px; opacity: 0.8; }
 .home-actions { display: flex; flex-direction: column; gap: 12px; }
@@ -402,7 +402,7 @@ html, body, #root, .app-container {
 .courses-list li { margin-bottom: 6px; }
 .empty-note   { font-size: 11px; color: #999; margin-top: 6px; }
 
-/* ── Course page view ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Course page view Ã¢â€â‚¬Ã¢â€â‚¬ */
 .course-page-card {
     background: rgba(255,255,255,0.06);
     border: 1px solid rgba(255,255,255,0.1);
@@ -426,7 +426,7 @@ html, body, #root, .app-container {
 }
 .syllabus-output.dark { background: #374151; color: #f0f0f0; border-color: #4b5563; }
 
-/* ── Settings view ── */
+/* Ã¢â€â‚¬Ã¢â€â‚¬ Settings view Ã¢â€â‚¬Ã¢â€â‚¬ */
 .settings-subtitle { font-size: 12px; color: #666; margin-bottom: 15px; }
 .settings-course-list { max-height: 400px; overflow-y: auto; font-size: 12px; }
 .settings-course-item {
@@ -442,3 +442,135 @@ html, body, #root, .app-container {
 .settings-course-item.dark { background: #374151; color: #f0f0f0; }
 .settings-course-item input { cursor: pointer; }
 .settings-empty { font-size: 12px; color: #666; }
+/* Floating widget UI overrides */
+.sidebar-container {
+  border-radius: 16px;
+  border: 1px solid rgba(30, 41, 59, 0.12);
+  background: #fffdfa;
+}
+
+.sidebar-content-wrapper {
+  flex: 1;
+  min-height: 0;
+  height: auto;
+}
+
+.sidebar-header {
+  padding: 12px 14px;
+  border-top-left-radius: 0;
+  background: linear-gradient(135deg, #b91c1c 0%, #991b1b 65%, #7f1d1d 100%);
+  font-size: 1rem;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset;
+}
+
+.header-flex {
+  gap: 8px;
+}
+
+.dark-mode-toggle,
+.settings-toggle {
+  width: 32px;
+  height: 32px;
+  font-size: 1rem;
+}
+
+.sidebar-content {
+  padding: 12px 14px;
+  gap: 10px;
+}
+
+.sidebar-footer {
+  padding: 7px 10px;
+  border-bottom-left-radius: 0;
+  border-top: 1px solid #eceff3;
+  font-size: 0.7rem;
+  color: #6b7280;
+}
+
+.page-context-banner {
+  width: 100%;
+  margin-top: 8px;
+}
+
+.generate-button {
+  border-radius: 12px;
+  font-size: 13px;
+  padding: 8px 12px;
+}
+
+.sidebar-container.dark-mode {
+  background: #1f2937;
+  border-color: #374151;
+}
+
+.sidebar-container.dark-mode .sidebar-header {
+  background: linear-gradient(135deg, #7f1d1d 0%, #9b1c1c 60%, #b45309 100%);
+}
+
+.sidebar-container.dark-mode .sidebar-footer {
+  border-top-color: #374151;
+  color: #9ca3af;
+}
+
+@media (max-width: 768px) {
+  .sidebar-content {
+    padding: 10px 12px;
+  }
+
+  .sidebar-header {
+    padding: 10px 12px;
+  }
+
+  .syllabus-output {
+    height: 180px;
+  }
+}
+
+
+.sync-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sync-card.dark {
+  background: #253042;
+  border-color: #3b4a61;
+}
+
+.sync-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sync-card-header .generate-button {
+  margin-top: 0;
+  padding: 6px 10px;
+  font-size: 12px;
+}
+
+.sync-line {
+  margin: 0;
+  font-size: 11px;
+  color: #4b5563;
+}
+
+.sync-status {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: #991b1b;
+}
+
+.sidebar-container.dark-mode .sync-line {
+  color: #cbd5e1;
+}
+
+.sidebar-container.dark-mode .sync-status {
+  color: #fca5a5;
+}

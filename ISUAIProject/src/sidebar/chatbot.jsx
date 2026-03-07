@@ -1,7 +1,7 @@
-
 import { useState, useRef, useEffect } from "react";
 import "./chatbot.css";
 import { askDevStral } from "../services/openrouter.js";
+import { buildCanvasPromptContext, isLikelyCanvasQuestion } from "./canvasKnowledge.js";
 import cyclonesLogo from "../assets/iowa_state_cyclones_logo_secondary_20088357.png";
 
 export default function Chatbot() {
@@ -12,30 +12,50 @@ export default function Chatbot() {
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, loading]);
 
   async function handleAskAI() {
     if (!input.trim() || loading) return;
-    
-    const userMessage = { role: "user", content: input };
-    setMessages(prev => [...prev, userMessage]);
+
+    const question = input;
+    const userMessage = { role: "user", content: question };
+    setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
-    
+
     try {
-      const answer = await askDevStral(input);
+      const canvasQuery = isLikelyCanvasQuestion(question);
+      const canvasContext = await buildCanvasPromptContext(question);
+
+      if (canvasQuery && !canvasContext.hasData) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              "I do not have synced Canvas data yet. Click 'Sync Canvas Data' in CyAI first, then ask again for course-specific dates and policies.",
+          },
+        ]);
+        return;
+      }
+
+      let finalPrompt = question;
+      if (canvasContext.hasData) {
+        finalPrompt = `You are CyAI, an academic assistant. Use the Canvas context below as the source of truth for course-specific facts. Do not fabricate dates or policies. If the context is missing the answer, say it is not found in synced data and recommend refreshing sync.\n\nCANVAS CONTEXT\n${canvasContext.contextText}\n\nUSER QUESTION\n${question}`;
+      }
+
+      const answer = await askDevStral(finalPrompt);
       const aiMessage = { role: "assistant", content: answer };
-      setMessages(prev => [...prev, aiMessage]);
+      setMessages((prev) => [...prev, aiMessage]);
     } catch (error) {
       console.error("Chat error:", error);
-      const errorMessage = { 
-        role: "assistant", 
-        content: `⚠️ Error: ${error.message || "Failed to get response"}` 
+      const errorMessage = {
+        role: "assistant",
+        content: `Error: ${error.message || "Failed to get response"}`,
       };
-      setMessages(prev => [...prev, errorMessage]);
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setLoading(false);
     }
@@ -47,17 +67,13 @@ export default function Chatbot() {
         <div className="messages">
           {messages.map((m, idx) => (
             <div key={idx} className={`message-row ${m.role}`}>
-              {m.role === "assistant" && (
-                <img src={cyclonesLogo} alt="CyAI" className="avatar" />
-              )}
+              {m.role === "assistant" && <img src={cyclonesLogo} alt="CyAI" className="avatar" />}
               <div className={`message ${m.role}`}>
-                <div className="message-content">
-                  {m.content}
-                </div>
+                <div className="message-content">{m.content}</div>
               </div>
             </div>
           ))}
-          
+
           {loading && (
             <div className="message-row assistant">
               <img src={cyclonesLogo} alt="CyAI" className="avatar" />
@@ -70,8 +86,7 @@ export default function Chatbot() {
               </div>
             </div>
           )}
-          
-          {/* Invisible element to scroll to */}
+
           <div ref={messagesEndRef} />
         </div>
       </div>
@@ -85,12 +100,8 @@ export default function Chatbot() {
           placeholder="Ask me anything..."
           disabled={loading}
         />
-        <button 
-          onClick={handleAskAI}
-          disabled={loading || !input.trim()}
-          className="send-button"
-        >
-          {loading ? "..." : "→"}
+        <button onClick={handleAskAI} disabled={loading || !input.trim()} className="send-button">
+          {loading ? "..." : "->"}
         </button>
       </div>
     </div>

@@ -263,3 +263,62 @@
 .sidebar-container.dark-mode .messages::-webkit-scrollbar-thumb:hover {
   background: #6b7280;
 }
+/* Floating widget chatbot overrides */
+.chatbot {
+  height: 48%;
+  min-height: 210px;
+  border-top: 1px solid #eceff3;
+  background: #fffdfa;
+}
+
+.messages {
+  padding: 12px;
+  gap: 10px;
+}
+
+.message {
+  padding: 9px 12px;
+  border-radius: 14px;
+  max-width: 88%;
+}
+
+.avatar {
+  width: 24px;
+  height: 24px;
+}
+
+.input-area {
+  padding: 10px 12px;
+}
+
+.input-area input {
+  padding: 10px 12px;
+  font-size: 14px;
+  border-radius: 12px;
+}
+
+.send-button {
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  font-size: 16px;
+}
+
+.sidebar-container.dark-mode .chatbot {
+  border-top-color: #374151;
+  background: #1f2937;
+}
+
+@media (max-width: 768px) {
+  .chatbot {
+    min-height: 180px;
+  }
+
+  .messages {
+    padding: 10px;
+  }
+
+  .input-area {
+    padding: 8px 10px;
+  }
+}
