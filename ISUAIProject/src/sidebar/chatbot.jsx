@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import "./chatbot.css";
 import { askDevStral } from "../services/openrouter.js";
 import { buildCanvasPromptContext, isLikelyCanvasQuestion } from "./canvasKnowledge.js";
-import cyclonesLogo from "../assets/CyAILogo[Reg].png";
+import cyclonesLogo from "../assets/iowa_state_cyclones_logo_secondary_20088357.png";
 
 export default function Chatbot() {
   const [messages, setMessages] = useState([
