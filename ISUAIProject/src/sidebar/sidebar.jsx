@@ -211,16 +211,17 @@ export default function Sidebar({ isCollapsed, isDarkMode, setIsDarkMode }) {
       <div className="sidebar-content-wrapper">
         <div className={`sidebar-header ${isCoursePage ? "course-header" : ""}`}>
           <div className="header-flex">
+            <div className="header-spacer" aria-hidden="true" />
             <h2>{isCollapsed ? "" : "CyAI"}</h2>
             {!isCollapsed && (
-              <>
+              <div className="header-actions">
                 <button className="dark-mode-toggle" onClick={() => setIsDarkMode(!isDarkMode)} title="Toggle dark mode">
                   {isDarkMode ? "☀️" : "🌙"}
                 </button>
                 <button className="settings-toggle" onClick={() => setActiveTab(activeTab === "home" ? "settings" : "home")} title="Settings">
                   S
                 </button>
-              </>
+              </div>
             )}
           </div>
           {!isCollapsed && (
