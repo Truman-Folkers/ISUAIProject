@@ -258,29 +258,51 @@ function collectStructuredPeople(result, seededInstructors = [], seededTas = [],
 
 async function discoverCanvasCourses(fallbackCourseFn) {
   const origin = window.location.origin;
+
   try {
     const apiCourses = await fetchCanvasJson(
       `${origin}/api/v1/courses?enrollment_state=active&state[]=available&per_page=100`
     );
+
     const normalized = (Array.isArray(apiCourses) ? apiCourses : [])
-      .filter((c) => c?.id)
+      .filter((c) => {
+        if (!c?.id) return false;
+
+        const name = (c.name || "").trim().toLowerCase();
+        const originalName = (c.original_name || "").trim().toLowerCase();
+        const courseCode = (c.course_code || "").trim().toLowerCase();
+
+        return (
+          name.startsWith("s2026") ||
+          originalName.startsWith("s2026") ||
+          courseCode.startsWith("s2026")
+        );
+      })
       .map((c) => ({
         courseId: String(c.id),
         courseName: c.name || c.original_name || `Course ${c.id}`,
         courseCode: c.course_code || undefined,
         courseUrl: `${origin}/courses/${c.id}`,
       }));
+
     if (normalized.length > 0) return normalized;
   } catch (error) {
-    void error;
+    console.error("Canvas API course discovery failed:", error);
   }
 
-  return fallbackCourseFn().map((c) => ({
-    courseId: String(c.id),
-    courseName: c.name,
-    courseCode: undefined,
-    courseUrl: c.url,
-  }));
+  return fallbackCourseFn()
+    .filter((c) => {
+      const name = (c.name || "").trim().toLowerCase();
+      const code = (c.courseCode || c.code || "").trim().toLowerCase();
+
+      return name.startsWith("s2026") || code.startsWith("s2026");
+    })
+    .map((c) => ({
+      courseId: String(c.id),
+      courseName: c.name,
+      courseCode: c.courseCode || c.code || undefined,
+      courseUrl: c.url,
+    }));
 }
 
 async function syncSingleCanvasCourse(course) {
@@ -517,5 +539,6 @@ export async function getCanvasSyncSnapshot() {
   const data = await storageLocalGet([CANVAS_SYNC_STORAGE_KEY]);
   return data[CANVAS_SYNC_STORAGE_KEY] || null;
 }
+
 
 
