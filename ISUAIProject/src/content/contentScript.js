@@ -136,14 +136,24 @@ function initSidebar() {
     iframe.contentWindow?.postMessage({ type: isOpen ? "SIDEBAR_EXPAND" : "SIDEBAR_COLLAPSE" }, "*");
   };
 
-  launcher.addEventListener("click", () => {
-    isOpen = !isOpen;
-    syncWidgetState();
-  });
+  // launcher.addEventListener("click", () => {
+  //   isOpen = !isOpen;
+  //   syncWidgetState();
+  // });
 
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && isOpen) {
       isOpen = false;
+      syncWidgetState();
+    }
+  });
+
+  document.addEventListener("click", (e) => {
+    const clickedInsidePopup = widgetRoot.contains(e.target);
+    const clickedToggle = launcherIcon.contains(e.target);
+
+    if(!clickedInsidePopup || clickedToggle){
+      isOpen = !isOpen;
       syncWidgetState();
     }
   });
