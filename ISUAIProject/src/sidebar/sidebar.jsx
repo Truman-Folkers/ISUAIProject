@@ -54,7 +54,7 @@ export default function Sidebar({ isCollapsed, isDarkMode, setIsDarkMode }) {
       if (!tabs[0]) return;
       const url = tabs[0].url || "";
       const match = url.match(/\/courses\/(\d+)/);
-      if (match && !url.includes("/settings") && !url.includes("/grades")) {
+      if (match && !url.includes("/settings")) {
         setIsCoursePage(true);
         setCurrentCourseId(match[1]);
       } else {
