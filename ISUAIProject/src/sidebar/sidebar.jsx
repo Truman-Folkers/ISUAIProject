@@ -270,6 +270,9 @@ export default function Sidebar({ isCollapsed, isDarkMode, setIsDarkMode }) {
                   <button className="generate-button" onClick={summarizeSyllabus} disabled={summarizing}>
                     {summarizing ? "Summarizing..." : "Summarize Syllabus"}
                   </button>
+                  <button className="generate-button" onClick={generateTodos} disabled={loading}>
+                    {loading ? "Loading..." : todos.length > 0 ? "Hide To-Do" : "Load To-Do"}
+                  </button>
                 </div>
 
                 {syllabusContent && (
@@ -278,6 +281,61 @@ export default function Sidebar({ isCollapsed, isDarkMode, setIsDarkMode }) {
                       <h4>Syllabus Summary</h4>
                       <textarea value={syllabusContent} readOnly className={`syllabus-output ${isDarkMode ? "dark" : ""}`} />
                     </div>
+                  </div>
+                )}
+
+                {(dashboardCourses.length > 0 || todos.length > 0) && (
+                  <div className="cyai-action-results">
+                    {dashboardCourses.length > 0 && (
+                      <div className="cyai-result-card">
+                        <h4>Dashboard Courses</h4>
+                        <ul className="cyai-course-list">
+                          {dashboardCourses
+                            .filter((course) => !hiddenCourses[course.id])
+                            .map((course) => (
+                              <li key={course.id}>
+                                <a href={course.url} target="_blank" rel="noreferrer" className="todo-link">
+                                  {course.name}
+                                </a>
+                              </li>
+                            ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {todos.length > 0 && (
+                      <div className={`todo-card ${isDarkMode ? "dark-mode" : ""}`}>
+                        <h4 className="todo-header">Top 5 To-Do Items</h4>
+                        <div className="todo-table">
+                          <table>
+                            <thead>
+                              <tr>
+                                <th>Title</th>
+                                <th>Course</th>
+                                <th>Due</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {todos.slice(0, 5).map((t, i) => (
+                                <tr key={i}>
+                                  <td className="todo-title">
+                                    {t.url ? (
+                                      <a className="todo-link" href={t.url} target="_blank" rel="noreferrer">
+                                        {t.title}
+                                      </a>
+                                    ) : (
+                                      t.title
+                                    )}
+                                  </td>
+                                  <td className="todo-course">{t.course}</td>
+                                  <td className="todo-due">{t.due_text}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 
