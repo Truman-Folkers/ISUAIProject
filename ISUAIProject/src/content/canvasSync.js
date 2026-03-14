@@ -1,5 +1,21 @@
+/* global chrome */
+import {
+  dedupeAnnouncements,
+  dedupeAssignments,
+  dedupeFileLinks,
+  dedupeOfficeHours,
+  extractInstructorCandidates,
+  extractOfficeHourEntries,
+  extractPolicies,
+  extractTaCandidates,
+  normalizeAnnouncement,
+  normalizeAssignment,
+  normalizePersonRecords,
+  normalizeSourceText,
+} from "./canvasSyncExtractors.js";
+
 const CANVAS_SYNC_STORAGE_KEY = "canvasKnowledgeBase";
-const CANVAS_SYNC_VERSION = 1;
+const CANVAS_SYNC_VERSION = 2;
 
 function detectCanvasPageContext(url = window.location.href) {
   try {
@@ -73,7 +89,7 @@ async function fetchCanvasText(url) {
 function htmlToText(html) {
   const doc = new DOMParser().parseFromString(html || "", "text/html");
   const text = doc.body?.innerText || "";
-  return text.replace(/\n{3,}/g, "\n\n").trim();
+  return normalizeSourceText(text);
 }
 
 function truncateText(text, max = 6000) {
@@ -95,7 +111,9 @@ function extractPdfLinksFromHtml(html, baseUrl) {
         label: label || "PDF resource",
         url: new URL(href, baseUrl).toString(),
       });
-    } catch {}
+    } catch (error) {
+    void error;
+  }
   }
   return links;
 }
@@ -105,24 +123,6 @@ function splitMeaningfulLines(text) {
     .split("\n")
     .map((l) => l.trim())
     .filter((l) => l.length > 0);
-}
-
-function extractPolicies(text) {
-  const lines = splitMeaningfulLines(text);
-  const policies = { lateWork: [], attendance: [], grading: [], other: [] };
-  for (const line of lines) {
-    const lower = line.toLowerCase();
-    if (/(late|extension|make[- ]?up|penalt)/.test(lower)) policies.lateWork.push(line);
-    else if (/(attendance|absen|participation)/.test(lower)) policies.attendance.push(line);
-    else if (/(grading|grade|percent|weight|points)/.test(lower)) policies.grading.push(line);
-    else if (/(exam|quiz|midterm|final|deadline|due)/.test(lower)) policies.other.push(line);
-  }
-  return {
-    lateWork: policies.lateWork.slice(0, 20),
-    attendance: policies.attendance.slice(0, 20),
-    grading: policies.grading.slice(0, 20),
-    other: policies.other.slice(0, 20),
-  };
 }
 
 function extractDateSnippet(text) {
@@ -151,29 +151,108 @@ function extractExamLikeItems(text, source, courseUrl) {
   return exams;
 }
 
-function normalizeAssignment(item, baseUrl) {
-  let url;
-  try {
-    if (item?.html_url) url = new URL(item.html_url, baseUrl).toString();
-  } catch {}
-  return {
-    title: item?.name || "Untitled assignment",
-    dueAt: item?.due_at || undefined,
-    url,
-    rawText: truncateText((item?.description || "").replace(/<[^>]*>/g, " "), 900),
-  };
+function normalizePeoplePageRole(text) {
+  const normalized = String(text || "").toLowerCase();
+  if (/(student|observer|designer)/.test(normalized)) return undefined;
+  if (/(ta|teaching assistant)/.test(normalized)) return "TA";
+  if (/(teacher|instructor|professor|lecturer|faculty)/.test(normalized)) return "Instructor";
+  return undefined;
 }
 
-function normalizeAnnouncement(item, baseUrl) {
-  let url;
-  try {
-    if (item?.html_url) url = new URL(item.html_url, baseUrl).toString();
-  } catch {}
+function extractPeoplePageRecords(html, source) {
+  const doc = new DOMParser().parseFromString(html || "", "text/html");
+  const records = [];
+  const mailtoLinks = Array.from(doc.querySelectorAll("a[href^='mailto:']"));
+  for (const link of mailtoLinks) {
+    const container = link.closest("li, tr, article, section, div");
+    const containerText = normalizeSourceText(container?.innerText || "");
+    if (!containerText) continue;
+
+    const headingText = normalizeSourceText(
+      container?.closest("section, article, div")?.querySelector("h1, h2, h3, h4")?.innerText || ""
+    );
+    const role = normalizePeoplePageRole(`${headingText}\n${containerText}`);
+    if (!role) continue;
+
+    const lines = splitMeaningfulLines(containerText);
+    const email = (link.getAttribute("href") || "").replace(/^mailto:/i, "").trim().toLowerCase() || undefined;
+    const name =
+      lines.find((line) => line && line !== email && !/@/.test(line) && line.length <= 80 && /^[A-Za-z]/.test(line)) ||
+      (link.innerText || "").trim() ||
+      undefined;
+    const office = lines.find((line) => /\b(?:office|room|building|hall|zoom)\b/i.test(line));
+    const officeHours = lines
+      .filter((line) => /\b(?:office hours?|oh|mon|tue|wed|thu|fri|sat|sun)\b/i.test(line))
+      .slice(0, 3);
+
+    records.push({
+      name,
+      role,
+      email,
+      office,
+      officeHours,
+      source,
+      rawText: truncateText(containerText, 1200),
+    });
+  }
+  return records;
+}
+
+function collectStructuredPeople(result, seededInstructors = [], seededTas = [], seededOfficeHours = []) {
+  const instructorCandidates = [...seededInstructors];
+  const taCandidates = [...seededTas];
+  const officeHourEntries = [...seededOfficeHours];
+
+  const textSources = [];
+  if (result.syllabusText) {
+    textSources.push({ source: "syllabus", text: result.syllabusText });
+  }
+  for (const page of result.rawPages || []) {
+    textSources.push({ source: page.type, text: page.text });
+  }
+  for (const announcement of result.announcements || []) {
+    if (!announcement?.rawText) continue;
+    const source = announcement.url ? `announcement:${announcement.url}` : `announcement:${announcement.title || "unknown"}`;
+    textSources.push({ source, text: `${announcement.title || ""}\n${announcement.rawText}` });
+  }
+
+  for (const entry of textSources) {
+    instructorCandidates.push(...extractInstructorCandidates(entry.text, entry.source));
+    taCandidates.push(...extractTaCandidates(entry.text, entry.source));
+    officeHourEntries.push(...extractOfficeHourEntries(entry.text, entry.source));
+  }
+
+  const normalizedOfficeHours = dedupeOfficeHours(officeHourEntries);
+  const instructors = normalizePersonRecords(instructorCandidates, normalizedOfficeHours);
+  const tas = normalizePersonRecords(taCandidates, normalizedOfficeHours);
+
+  const derivedHours = [
+    ...instructors.flatMap((person) =>
+      (person.officeHours || []).map((hoursText) => ({
+        personName: person.name,
+        role: person.role,
+        hoursText,
+        location: person.office,
+        source: person.source,
+        rawText: person.rawText,
+      }))
+    ),
+    ...tas.flatMap((person) =>
+      (person.officeHours || []).map((hoursText) => ({
+        personName: person.name,
+        role: person.role,
+        hoursText,
+        location: person.office,
+        source: person.source,
+        rawText: person.rawText,
+      }))
+    ),
+  ];
+
   return {
-    title: item?.title || "Announcement",
-    postedAt: item?.posted_at || item?.created_at || undefined,
-    url,
-    rawText: truncateText((item?.message || "").replace(/<[^>]*>/g, " "), 900),
+    instructors,
+    tas,
+    officeHours: dedupeOfficeHours([...normalizedOfficeHours, ...derivedHours]),
   };
 }
 
@@ -192,7 +271,9 @@ async function discoverCanvasCourses(fallbackCourseFn) {
         courseUrl: `${origin}/courses/${c.id}`,
       }));
     if (normalized.length > 0) return normalized;
-  } catch {}
+  } catch (error) {
+    void error;
+  }
 
   return fallbackCourseFn().map((c) => ({
     courseId: String(c.id),
@@ -203,56 +284,88 @@ async function discoverCanvasCourses(fallbackCourseFn) {
 }
 
 async function syncSingleCanvasCourse(course) {
-  const now = new Date().toISOString();
+  const now = new Date();
+  const nowIso = now.toISOString();
   const base = course.courseUrl;
   const result = {
     courseId: String(course.courseId),
     courseName: course.courseName,
     courseCode: course.courseCode,
     courseUrl: base,
-    scrapedAt: now,
+    scrapedAt: nowIso,
     syllabusText: "",
     assignments: [],
     exams: [],
     announcements: [],
+    instructors: [],
+    tas: [],
+    officeHours: [],
     policies: { lateWork: [], attendance: [], grading: [], other: [] },
     fileLinks: [],
     rawPages: [],
   };
 
   const id = encodeURIComponent(course.courseId);
+  const seededInstructorCandidates = [];
+  const seededTaCandidates = [];
+  const seededOfficeHourEntries = [];
+  let assignmentGroupMap = {};
 
   sendSyncProgress("indexing_assignments", `Indexing assignments for ${course.courseName}`);
   try {
+    const assignmentGroups = await fetchCanvasJson(
+      `${window.location.origin}/api/v1/courses/${id}/assignment_groups?per_page=100`
+    );
+    assignmentGroupMap = Object.fromEntries(
+      (Array.isArray(assignmentGroups) ? assignmentGroups : [])
+        .filter((group) => group?.id)
+        .map((group) => [group.id, group.name || `Group ${group.id}`])
+    );
+  } catch (error) {
+    void error;
+  }
+
+  try {
     const assignments = await fetchCanvasJson(`${window.location.origin}/api/v1/courses/${id}/assignments?per_page=100`);
-    result.assignments = (Array.isArray(assignments) ? assignments : []).map((a) => normalizeAssignment(a, base));
+    result.assignments = dedupeAssignments(
+      (Array.isArray(assignments) ? assignments : []).map((assignment) =>
+        normalizeAssignment(assignment, base, assignmentGroupMap, now)
+      )
+    );
     result.exams.push(
       ...result.assignments
-        .filter((a) => /(exam|quiz|midterm|final)/i.test(a.title))
-        .map((a) => ({
-          title: a.title,
-          date: a.dueAt || extractDateSnippet(a.rawText || ""),
+        .filter((assignment) => assignment.isExamLike)
+        .map((assignment) => ({
+          title: assignment.title,
+          date: assignment.dueAt || extractDateSnippet(`${assignment.summary || ""}\n${assignment.rawText || ""}`),
           source: "assignments",
-          url: a.url,
-          rawText: (a.rawText || "").slice(0, 300),
+          url: assignment.url,
+          rawText: (assignment.rawText || "").slice(0, 300),
         }))
     );
-  } catch {}
+  } catch (error) {
+    void error;
+  }
 
   sendSyncProgress("reading_announcements", `Reading announcements for ${course.courseName}`);
   try {
     const anns = await fetchCanvasJson(
       `${window.location.origin}/api/v1/courses/${id}/discussion_topics?only_announcements=true&per_page=30`
     );
-    result.announcements = (Array.isArray(anns) ? anns : []).map((a) => normalizeAnnouncement(a, base));
-    for (const a of result.announcements) {
-      result.exams.push(...extractExamLikeItems(`${a.title}\n${a.rawText || ""}`, "announcements", a.url || base));
+    result.announcements = dedupeAnnouncements(
+      (Array.isArray(anns) ? anns : []).map((announcement) => normalizeAnnouncement(announcement, base))
+    );
+    for (const announcement of result.announcements) {
+      result.exams.push(...extractExamLikeItems(`${announcement.title}\n${announcement.rawText || ""}`, "announcements", announcement.url || base));
     }
-  } catch {}
+  } catch (error) {
+    void error;
+  }
 
   const htmlSources = [
     { type: "home", url: `${base}` },
     { type: "syllabus", url: `${base}/assignments/syllabus` },
+    { type: "people", url: `${base}/users` },
     { type: "assignments_page", url: `${base}/assignments` },
     { type: "modules", url: `${base}/modules` },
     { type: "announcements_page", url: `${base}/announcements` },
@@ -268,7 +381,26 @@ async function syncSingleCanvasCourse(course) {
       result.fileLinks.push(...extractPdfLinksFromHtml(html, src.url));
       if (src.type === "syllabus" && text.length > 0) result.syllabusText = text;
       result.exams.push(...extractExamLikeItems(text, src.type, src.url));
-    } catch {}
+      if (src.type === "people") {
+        const peopleRecords = extractPeoplePageRecords(html, src.type);
+        seededInstructorCandidates.push(...peopleRecords.filter((record) => record.role === "Instructor" || record.role === "Professor" || record.role === "Lecturer"));
+        seededTaCandidates.push(...peopleRecords.filter((record) => /ta/i.test(record.role || "")));
+        seededOfficeHourEntries.push(
+          ...peopleRecords.flatMap((record) =>
+            (record.officeHours || []).map((hoursText) => ({
+              personName: record.name,
+              role: record.role,
+              hoursText,
+              location: record.office,
+              source: src.type,
+              rawText: record.rawText,
+            }))
+          )
+        );
+      }
+    } catch (error) {
+    void error;
+  }
   }
 
   if (!result.syllabusText) {
@@ -279,15 +411,20 @@ async function syncSingleCanvasCourse(course) {
   const policySource = [result.syllabusText, ...result.rawPages.map((p) => p.text)].join("\n");
   result.policies = extractPolicies(policySource);
 
-  const dedup = new Map();
-  for (const e of result.exams) {
-    const key = `${(e.title || "").toLowerCase()}|${e.date || ""}|${e.source || ""}`;
-    if (!dedup.has(key)) dedup.set(key, e);
+  const structuredPeople = collectStructuredPeople(result, seededInstructorCandidates, seededTaCandidates, seededOfficeHourEntries);
+  result.instructors = structuredPeople.instructors;
+  result.tas = structuredPeople.tas;
+  result.officeHours = structuredPeople.officeHours;
+
+  const dedupedExams = new Map();
+  for (const exam of result.exams) {
+    const key = `${(exam.title || "").toLowerCase()}|${exam.date || ""}|${exam.source || ""}`;
+    if (!dedupedExams.has(key)) dedupedExams.set(key, exam);
   }
-  result.exams = Array.from(dedup.values()).slice(0, 80);
-  result.fileLinks = result.fileLinks
-    .filter((l, idx, arr) => l?.url && arr.findIndex((x) => x.url === l.url) === idx)
-    .slice(0, 80);
+  result.exams = Array.from(dedupedExams.values()).slice(0, 80);
+  result.assignments = result.assignments.slice(0, 120);
+  result.announcements = result.announcements.slice(0, 60);
+  result.fileLinks = dedupeFileLinks(result.fileLinks).slice(0, 80);
 
   return result;
 }
@@ -373,10 +510,12 @@ export function handleCanvasSyncMessage(msg, sendResponse, fallbackCourseFn = ()
 
 export function isLikelyCanvasQuestion(question = "") {
   const q = String(question || "").toLowerCase();
-  return /(canvas|course|class|syllabus|assignment|quiz|exam|due|announcement|module|late work|attendance|grading|midterm|final)/.test(q);
+  return /(canvas|course|class|syllabus|assignment|quiz|exam|due|announcement|module|late work|attendance|grading|midterm|final|professor|instructor|ta|office hour|contact)/.test(q);
 }
 
 export async function getCanvasSyncSnapshot() {
   const data = await storageLocalGet([CANVAS_SYNC_STORAGE_KEY]);
   return data[CANVAS_SYNC_STORAGE_KEY] || null;
 }
+
+

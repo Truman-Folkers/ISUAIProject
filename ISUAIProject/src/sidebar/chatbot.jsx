@@ -4,6 +4,21 @@ import { askDevStral } from "../services/openrouter.js";
 import { buildCanvasPromptContext, isLikelyCanvasQuestion } from "./canvasKnowledge.js";
 import cyclonesLogo from "../assets/iowa_state_cyclones_logo_secondary_20088357.png";
 
+function buildCanvasPrompt(question, canvasContext) {
+  return [
+    "You are CyAI, an academic assistant.",
+    "Use the Canvas context below as the source of truth for course-specific facts.",
+    "Answer briefly and directly.",
+    "If the context does not contain the answer, say it is not found in synced Canvas data and suggest refreshing sync.",
+    "",
+    "CANVAS CONTEXT",
+    canvasContext.contextText,
+    "",
+    "USER QUESTION",
+    question,
+  ].join("\n");
+}
+
 export default function Chatbot() {
   const [messages, setMessages] = useState([
     { role: "assistant", content: "Hello! I'm CyAI. How can I help you today?" }
@@ -41,11 +56,7 @@ export default function Chatbot() {
         return;
       }
 
-      let finalPrompt = question;
-      if (canvasContext.hasData) {
-        finalPrompt = `You are CyAI, an academic assistant. Use the Canvas context below as the source of truth for course-specific facts. Do not fabricate dates or policies. If the context is missing the answer, say it is not found in synced data and recommend refreshing sync.\n\nCANVAS CONTEXT\n${canvasContext.contextText}\n\nUSER QUESTION\n${question}`;
-      }
-
+      const finalPrompt = canvasContext.hasData ? buildCanvasPrompt(question, canvasContext) : question;
       const answer = await askDevStral(finalPrompt);
       const aiMessage = { role: "assistant", content: answer };
       setMessages((prev) => [...prev, aiMessage]);
@@ -53,7 +64,7 @@ export default function Chatbot() {
       console.error("Chat error:", error);
       const errorMessage = {
         role: "assistant",
-        content: `Error: ${error.message || "Failed to get response"}`,
+        content: error.message || "I couldn't get a response right now. Please try again in a moment.",
       };
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
