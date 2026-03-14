@@ -1,7 +1,8 @@
 import { useState, useRef, useEffect } from "react";
 import "./chatbot.css";
 import { askDevStral } from "../services/openrouter.js";
-import { buildCanvasPromptContext, isLikelyCanvasQuestion } from "./canvasKnowledge.js";
+import { buildMinimalCanvasPromptContext } from "./canvasContext.js";
+import { isLikelyCanvasQuestion } from "./canvasKnowledge.js";
 import cyclonesLogo from "../assets/iowa_state_cyclones_logo_secondary_20088357.png";
 
 function buildCanvasPrompt(question, canvasContext) {
@@ -42,7 +43,7 @@ export default function Chatbot() {
 
     try {
       const canvasQuery = isLikelyCanvasQuestion(question);
-      const canvasContext = await buildCanvasPromptContext(question);
+      const canvasContext = await buildMinimalCanvasPromptContext(question);
 
       if (canvasQuery && !canvasContext.hasData) {
         setMessages((prev) => [
