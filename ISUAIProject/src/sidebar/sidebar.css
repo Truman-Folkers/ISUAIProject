@@ -5,7 +5,7 @@ html, body, #root, .app-container {
   margin: 0;
   padding: 0;
   overflow: hidden;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Sora', Tahoma, Geneva, Verdana, sans-serif;
 }
 
 
@@ -18,7 +18,7 @@ html, body, #root, .app-container {
   box-shadow: none;
   display: flex;
   flex-direction: column;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: 'Sora', Tahoma, Geneva, Verdana, sans-serif;
   color: #333;
   overflow: hidden;
   border-top-left-radius: 25px;
