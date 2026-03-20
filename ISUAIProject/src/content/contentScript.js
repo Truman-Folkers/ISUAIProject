@@ -369,17 +369,20 @@ function initSidebar() {
   const greetingBubble1 = document.createElement("div");
   greetingBubble1.className = "ai-greeting-bubble";
   greetingBubble1.id = "greeting-bubble-1";
-  greetingBubble1.textContent = "Hello! I am CyAI your canvas virtual assistant.";
+  greetingBubble1.textContent = "Hello! I am CyAI, your canvas virtual assistant.";
+  greetingBubble1.style.backgroundColor = "white";
 
   const greetingTypingBubble = document.createElement("div");
   greetingTypingBubble.className = "ai-greeting-bubble";
   greetingTypingBubble.id = "greeting-bubble-typing";
   greetingTypingBubble.textContent = "...";
+  greetingTypingBubble.style.backgroundColor = "white";
   
   const greetingBubble2 = document.createElement("div");
   greetingBubble2.className = "ai-greeting-bubble";
   greetingBubble2.id = "greeting-bubble-2";
   greetingBubble2.textContent = "You can access me anytime! How can I assist you today?";
+  greetingBubble2.style.backgroundColor = "white";
 
   const greetingStack = document.createElement("div");
   greetingStack.id = "ai-greeting-stack";

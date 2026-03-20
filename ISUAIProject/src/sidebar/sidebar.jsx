@@ -276,11 +276,13 @@ export default function Sidebar({ isCollapsed, isDarkMode, setIsDarkMode }) {
   const summarizeSyllabus = async () => {
     setSummarizing(true);
     setSyllabusContent("");
+    let content = '';
     try {
       const resp = await sendTabMessage("SCRAPE_SYLLABUS", { courseId: currentCourseId });
       if (resp?.success && resp.data && resp.data.length > 50 && !resp.data.includes("No syllabus content found")) {
         const prompt = `Please analyze this course syllabus and extract the following information. Format your response EXACTLY as shown:\n\nSYLLABUS SUMMARY\n================\n\n1) DUE DATES:\n[List all due dates and deadlines]\n\n2) GRADING BREAKDOWN:\n[How grades are calculated with percentages]\n\n3) MAJOR ASSIGNMENTS:\n[Significant assignments, projects, exams]\n\n4) INSTRUCTOR CONTACT:\n[Name, email, office hours]\n\n---\nSYLLABUS TEXT:\n${resp.data}`;
-        setSyllabusContent(await askDevStral(prompt));
+        content = await askDevStral(prompt);
+        setSyllabusContent(content);
       } else {
         setSyllabusContent("No syllabus content detected for this course.");
       }
@@ -289,6 +291,8 @@ export default function Sidebar({ isCollapsed, isDarkMode, setIsDarkMode }) {
       setSyllabusContent("Error summarizing syllabus: " + err.message);
     }
     setSummarizing(false);
+    console.log("Syllabus content:", content);
+    return content;
   };
 
   const syncPanel = (
@@ -375,15 +379,6 @@ export default function Sidebar({ isCollapsed, isDarkMode, setIsDarkMode }) {
           {activeTab === "home" && isCoursePage && (
             <div className="home-page-view">
               <div className="cyai-widget-container">
-                {syllabusContent && (
-                  <div className="cyai-action-results">
-                    <div className="cyai-result-card">
-                      <h4>Syllabus Summary</h4>
-                      <textarea value={syllabusContent} readOnly className={`syllabus-output ${isDarkMode ? "dark" : ""}`} />
-                    </div>
-                  </div>
-                )}
-
                 <Chatbot
                   isDarkMode={isDarkMode}
                   onToggleDarkMode={() => setIsDarkMode(!isDarkMode)}
@@ -421,6 +416,12 @@ export default function Sidebar({ isCollapsed, isDarkMode, setIsDarkMode }) {
                       label: summarizing ? "Summarizing..." : "Summarize Syllabus",
                       onClick: summarizeSyllabus,
                       disabled: summarizing,
+                      toAgentMessage: (result) => {
+                        if(result.length === 0){
+                          return "There was a problem summarizing the syllabus or no syllabus content was found.";
+                        }
+                        return `${result}`
+                      },
                     },
                   ]}
                   syncAction={{
