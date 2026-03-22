@@ -99,7 +99,7 @@ console.log("=== GEMINI DEBUG ===");
 //   throw new Error("Gemini API key not found in environment variables");
 // }
 const PROXY_URL = 'https://gemini-proxy.cyai.workers.dev';
-const EXTENSION_SECRET = 'e61dac77-116d-49f3-959f-e79721d1626c';
+const EXTENSION_SECRET = 'AIzaSyAwYK2wsylXupbroqxdC3XLF2DkEb_ujn0';
 
 export async function askDevStral(prompt) {
   const payload = {
