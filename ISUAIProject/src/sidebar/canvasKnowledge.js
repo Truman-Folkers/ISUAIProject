@@ -7,6 +7,8 @@ const canvasQuestionRe = /(canvas|course|class|syllabus|assignment|quiz|exam|due
 const storageLocalGet = (keys) =>
   new Promise((resolve) => chrome.storage.local.get(keys, (data) => resolve(data || {})));
 
+const MAX_CONTEXT_CHARS = 3600;
+
 function normalizeText(value) {
   return String(value || "").toLowerCase().replace(/[^a-z0-9\s]/g, " ").replace(/\s+/g, " ").trim();
 }
@@ -36,6 +38,16 @@ function withinNextDays(iso, days) {
   const end = new Date(now);
   end.setDate(end.getDate() + days);
   return d >= now && d <= end;
+}
+
+function isBroadAssignmentQuestion(queryText) {
+  return /assignment|due|this week|next week|upcoming|homework|project|quiz|exam|to do|todo/.test(queryText);
+}
+
+function includesQueryTokens(text, queryTokens) {
+  const hay = normalizeText(text);
+  if (!hay) return false;
+  return queryTokens.some((token) => token.length > 2 && hay.includes(token));
 }
 
 function buildStructuredSummary(question, courses) {
@@ -90,6 +102,26 @@ function buildStructuredSummary(question, courses) {
   return lines.slice(0, 30);
 }
 
+function buildPlannerSummary(question, plannerItems, courseScope) {
+  const q = normalizeText(question);
+  const queryTokens = tokenize(question);
+  if (!isBroadAssignmentQuestion(q)) return [];
+
+  const allowedCourseIds = new Set((courseScope || []).map((course) => String(course.courseId)));
+
+  return (plannerItems || [])
+    .filter((item) => {
+      if (allowedCourseIds.size > 0 && !allowedCourseIds.has(String(item.courseId || ""))) return false;
+      const relevantByText = includesQueryTokens(
+        `${item.title || ""} ${item.courseName || ""} ${item.courseCode || ""} ${item.plannableType || ""}`,
+        queryTokens
+      );
+      return withinNextDays(item.dueAt, 30) || relevantByText || /due|upcoming|todo|to do/.test(q);
+    })
+    .slice(0, 12)
+    .map((item) => `PLANNER_ITEM | ${item.courseName} | ${item.title} | due ${item.dueAt || "unknown"} | ${item.url || ""}`);
+}
+
 export function isLikelyCanvasQuestion(question = "") {
   return canvasQuestionRe.test(String(question || ""));
 }
@@ -120,10 +152,14 @@ export async function buildCanvasPromptContext(question) {
     .sort((a, b) => b.score - a.score);
 
   const matchedCourses = scored.filter((x) => x.score > 0).map((x) => x.course);
-  const scope = matchedCourses.length > 0 ? matchedCourses.slice(0, 3) : kb.courses.slice(0, 4);
+  const scope = matchedCourses.length > 0 ? matchedCourses.slice(0, 3) : (isBroadAssignmentQuestion(queryText) ? kb.courses : kb.courses.slice(0, 4));
 
-  const summaryLines = buildStructuredSummary(question, scope);
-  const contextText = [
+  const summaryLines = [
+    ...buildPlannerSummary(question, kb.plannerItems || [], scope),
+    ...buildStructuredSummary(question, scope),
+  ].slice(0, 30);
+
+  const rawContextText = [
     `Synced At: ${kb.syncedAt || "unknown"}`,
     `Indexed Courses: ${kb.courseCount || kb.courses.length}`,
     "",
@@ -131,6 +167,10 @@ export async function buildCanvasPromptContext(question) {
     "",
     ...summaryLines,
   ].join("\n");
+  const contextText =
+    rawContextText.length <= MAX_CONTEXT_CHARS
+      ? rawContextText
+      : `${rawContextText.slice(0, MAX_CONTEXT_CHARS)}\n[Context truncated]`;
 
   return {
     hasData: true,

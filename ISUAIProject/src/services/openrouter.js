@@ -1,129 +1,72 @@
-// // src/services/openrouter.js - UPDATED
-// // import { OpenRouter } from "@openrouter/sdk";
+const PROXY_URL = import.meta.env.VITE_CHAT_PROXY_URL || "https://gemini-proxy.cyai.workers.dev";
+const EXTENSION_SECRET = import.meta.env.VITE_EXTENSION_SECRET || "";
+const MAX_PROMPT_CHARS = 12000;
 
-// console.log("=== OPENROUTER DEBUG ===");
-// console.log("SDK loaded:", !!OpenRouter);
-// console.log("Key loaded:", !!import.meta.env.VITE_GEMINI_API_KEY);
+function trimPrompt(prompt) {
+  const text = String(prompt || "").trim();
+  if (text.length <= MAX_PROMPT_CHARS) return text;
+  return `${text.slice(0, MAX_PROMPT_CHARS)}\n\n[Prompt truncated to reduce request size]`;
+}
 
-// let client;
+function extractErrorDetail(payload, status) {
+  if (!payload) return `HTTP error ${status}`;
+  return (
+    payload?.error?.message ||
+    payload?.error ||
+    payload?.detail ||
+    payload?.message ||
+    `HTTP error ${status}`
+  );
+}
 
-// export async function askDevStral(prompt) {
-//   console.log("askDevStral called with:", prompt.substring(0, 50) + "...");
-  
-//   if (!client) {
-//     const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-    
-//     if (!apiKey) {
-//       throw new Error("API key not found in environment variables");
-//     }
-    
-//     console.log("Initializing OpenRouter client...");
-    
-//     // Initialize the client with the correct configuration
-//     client = new OpenRouter({
-//       apiKey: apiKey,
-//       // Add all required headers
-//       defaultHeaders: {
-//         "HTTP-Referer": window.location.origin || "http://localhost:5173",
-//         "X-Title": "DevStral Extension",
-//         "Content-Type": "application/json"
-//       }
-//     });
-    
-//     console.log("Client initialized:", !!client);
-//     console.log("Client structure:", Object.keys(client));
-//   }
-  
-//   try {
-//     console.log("Making API call...");
-    
-//     // Debug: Check client structure
+function buildFriendlyError(status, detail) {
+  if (status === 401) {
+    return new Error(
+      "Chat proxy authentication failed. Set the same extension secret in the worker and in Vite, then rebuild the extension."
+    );
+  }
 
-//     console.log("Client completions:", client.chat?.completions);
-    
-//     // Alternative: Use client directly if structure is different
-//     const response = await client.chat.send({
-//       model: "mistralai/devstral-2512:free",
-//       messages: [
-//         { role: "system", content: "You are a helpful assistant." },
-//         { role: "user", content: prompt }
-//       ]
-//     });
-    
-//     console.log("Response received:", response);
-    
-//     // Extract content based on possible response formats
-//     if (response?.choices?.[0]?.message?.content) {
-//       return response.choices[0].message.content;
-//     } else if (response?.data?.choices?.[0]?.message?.content) {
-//       return response.data.choices[0].message.content;
-//     } else if (response?.content) {
-//       return response.content;
-//     } else {
-//       console.error("Unexpected response format:", response);
-//       return "Received response in unexpected format.";
-//     }
-    
-//   } catch (error) {
-//     console.error("FULL ERROR DETAILS:", {
-//       name: error.name,
-//       message: error.message,
-//       stack: error.stack,
-//       response: error.response?.data
-//     });
-    
-//     // Provide user-friendly error
-//     if (error.message?.includes("401")) {
-//       throw new Error("Invalid API key. Please check your OpenRouter API key.");
-//     }
-//     if (error.message?.includes("rate limit")) {
-//       throw new Error("Rate limit exceeded. Please try again later.");
-//     }
-    
-//     throw new Error(`API Error: ${error.message}`);
-//   }
-// }
+  if (status === 429) {
+    return new Error(
+      `CyAI is rate limited right now. This usually means the deployed Azure OpenAI deployment or API key is hitting quota or rate limits. ${detail}`.trim()
+    );
+  }
 
-// src/services/gemini.js
+  if (status >= 500) {
+    return new Error("CyAI's chat service is having trouble right now. Please try again shortly.");
+  }
 
-
-
-
-
-console.log("=== GEMINI DEBUG ===");
-// console.log("Key loaded:", !!import.meta.env.VITE_GEMINI_API_KEY);
-
-// let apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
-// if (!apiKey) {
-//   throw new Error("Gemini API key not found in environment variables");
-// }
-const PROXY_URL = 'https://gemini-proxy.cyai.workers.dev';
-const EXTENSION_SECRET = 'AIzaSyAwYK2wsylXupbroqxdC3XLF2DkEb_ujn0';
+  return new Error(detail || `HTTP error ${status}`);
+}
 
 export async function askDevStral(prompt) {
+  if (!EXTENSION_SECRET) {
+    throw new Error(
+      "Missing VITE_EXTENSION_SECRET. Add it to your extension .env, rebuild, and make sure it matches the worker's EXTENSION_SECRET."
+    );
+  }
+
   const payload = {
     contents: [
       {
-        role: 'user',
-        parts: [{ text: prompt }]
-      }
-    ]
+        role: "user",
+        parts: [{ text: trimPrompt(prompt) }],
+      },
+    ],
   };
 
-  // Retry once on 429 using Retry-After when available.
   for (let attempt = 0; attempt < 2; attempt += 1) {
     const response = await fetch(PROXY_URL, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'X-Extension-Secret': EXTENSION_SECRET,
+        "Content-Type": "application/json",
+        "X-Extension-Secret": EXTENSION_SECRET,
       },
       body: JSON.stringify(payload),
     });
 
-    const retryAfterHeader = response.headers.get('Retry-After');
-    const retryAfterSeconds = Number.parseInt(retryAfterHeader || '', 10);
+    const retryAfterHeader = response.headers.get("Retry-After");
+    const retryAfterSeconds = Number.parseInt(retryAfterHeader || "", 10);
     let data = null;
 
     try {
@@ -133,8 +76,7 @@ export async function askDevStral(prompt) {
     }
 
     if (response.ok) {
-      console.log('Gemini response:', data);
-      return data?.candidates?.[0]?.content?.parts?.[0]?.text || 'No response returned.';
+      return data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response returned.";
     }
 
     if (response.status === 429 && attempt === 0) {
@@ -145,43 +87,9 @@ export async function askDevStral(prompt) {
       continue;
     }
 
-    const detail = data?.error?.message || data?.detail || `HTTP error ${response.status}`;
-    if (response.status === 429) {
-      throw new Error('Rate limit reached (429). Please wait a bit and try again. ' + detail);
-    }
-    throw new Error(detail);
+    const detail = extractErrorDetail(data, response.status);
+    throw buildFriendlyError(response.status, detail);
   }
 
-  throw new Error('Request failed after retry.');
+  throw new Error("Chat request failed after retry.");
 }
-  //     `https://generativelanguage.googleapis.com/v1/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-  //     {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //       },
-  //       body: JSON.stringify({
-  //         contents: [
-  //           {
-  //             role: "user",
-  //             parts: [{ text: prompt }]
-  //           }
-  //         ]
-  //       }),
-  //     }
-  //   );
-
-  //   if (!response.ok) {
-  //     throw new Error(`HTTP error ${response.status}`);
-  //   }
-
-  //   const data = await response.json();
-  //   console.log("Gemini response:", data);
-
-  //   return data?.candidates?.[0]?.content?.parts?.[0]?.text
-  //     || "No response returned.";
-
-  // } catch (error) {
-  //   console.error("FULL ERROR DETAILS:", error);
-  //   throw new Error(`Gemini API Error: ${error.message}`);
-  // }const response = await fetch(PROXY_URL, {

@@ -1,16 +1,40 @@
-# React + Vite
+# CyAI Extension
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+## Chat setup
 
-Currently, two official plugins are available:
+The popup chat talks to the Cloudflare worker in `gemini-proxy/`.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+1. Copy `.env.example` to `.env`
+2. Set `VITE_EXTENSION_SECRET` to a random shared secret
+3. In `gemini-proxy/`, set the same value as the worker secret `EXTENSION_SECRET`
+4. Set your Azure OpenAI worker secrets:
+   `AZURE_OPENAI_ENDPOINT`
+   `AZURE_OPENAI_DEPLOYMENT`
+   `AZURE_OPENAI_API_VERSION`
+   `AZURE_OPENAI_API_KEY`
+5. Rebuild the extension and redeploy the worker
 
-## React Compiler
+Example commands:
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+```powershell
+cd C:\Users\truma\Downloads\Coding\isuAI-innovation\ISUAIProject\ISUAIProject\gemini-proxy
+npx wrangler secret put EXTENSION_SECRET
+npx wrangler secret put AZURE_OPENAI_API_KEY
+npx wrangler secret put AZURE_OPENAI_ENDPOINT
+npx wrangler secret put AZURE_OPENAI_DEPLOYMENT
+npx wrangler secret put AZURE_OPENAI_API_VERSION
+npx wrangler deploy
+```
 
-## Expanding the ESLint configuration
+If you already stored the Azure key under `GEMINI_API_KEY`, the worker will still use it as a fallback, but switching to `AZURE_OPENAI_API_KEY` is the cleaner permanent setup.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+Then rebuild the extension:
+
+```powershell
+cd C:\Users\truma\Downloads\Coding\isuAI-innovation\ISUAIProject\ISUAIProject
+cmd /c npm run build
+```
+
+## Canvas sync
+
+Canvas sync only works while you are on a Canvas page covered by the extension manifest. After a successful sync, chat uses the synced course data and upcoming planner items when answering course-specific questions.

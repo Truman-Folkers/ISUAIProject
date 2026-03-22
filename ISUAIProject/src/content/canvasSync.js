@@ -1,5 +1,5 @@
 const CANVAS_SYNC_STORAGE_KEY = "canvasKnowledgeBase";
-const CANVAS_SYNC_VERSION = 1;
+const CANVAS_SYNC_VERSION = 2;
 
 function detectCanvasPageContext(url = window.location.href) {
   try {
@@ -54,7 +54,9 @@ function sendSyncProgress(stage, detail, extra = {}) {
       timestamp: new Date().toISOString(),
       ...extra,
     },
-    () => {}
+    () => {
+      void chrome.runtime.lastError;
+    }
   );
 }
 
@@ -68,6 +70,14 @@ async function fetchCanvasText(url) {
   const resp = await fetch(url, { credentials: "include" });
   if (!resp.ok) throw new Error(`HTTP ${resp.status} for ${url}`);
   return resp.text();
+}
+
+async function fetchPlannerItems() {
+  const start = new Date().toISOString();
+  const resp = await fetchCanvasJson(
+    `${window.location.origin}/api/v1/planner/items?start_date=${start}&per_page=100&order=asc`
+  );
+  return Array.isArray(resp) ? resp : [];
 }
 
 function htmlToText(html) {
@@ -302,6 +312,47 @@ async function runCanvasSync(fallbackCourseFn) {
 
   const syncedCourses = [];
   const failedCourses = [];
+  let plannerItems = [];
+
+  sendSyncProgress("reading_planner", "Reading upcoming planner items");
+  try {
+    const courseMap = new Map(courses.map((course) => [String(course.courseId), course]));
+    plannerItems = (await fetchPlannerItems())
+      .filter((item) => item?.plannable_type !== "announcement")
+      .map((item) => {
+        const plannable = item?.plannable || {};
+        const courseId = String(item?.course_id || plannable?.course_id || "");
+        const course = courseMap.get(courseId);
+        const dueAt = plannable?.due_at || plannable?.todo_date || item?.plannable_date || undefined;
+        let url;
+        if (courseId && item?.plannable_id) {
+          const typeMap = {
+            assignment: "assignments",
+            quiz: "quizzes",
+            discussion_topic: "discussion_topics",
+          };
+          url = `${window.location.origin}/courses/${courseId}/${typeMap[item.plannable_type] || "assignments"}/${item.plannable_id}`;
+        }
+
+        return {
+          id: item?.plannable_id != null ? String(item.plannable_id) : undefined,
+          courseId,
+          courseName: course?.courseName || item?.context_name || `Course ${courseId}`,
+          courseCode: course?.courseCode,
+          title: plannable?.title || item?.plannable_id || "Untitled",
+          dueAt,
+          url,
+          plannableType: item?.plannable_type || undefined,
+        };
+      })
+      .filter((item) => item.courseId && item.title)
+      .sort((left, right) => {
+        const leftTime = left?.dueAt ? new Date(left.dueAt).getTime() : Number.POSITIVE_INFINITY;
+        const rightTime = right?.dueAt ? new Date(right.dueAt).getTime() : Number.POSITIVE_INFINITY;
+        return leftTime - rightTime;
+      })
+      .slice(0, 100);
+  } catch {}
 
   for (let i = 0; i < courses.length; i++) {
     const course = courses[i];
@@ -333,6 +384,7 @@ async function runCanvasSync(fallbackCourseFn) {
     pageContext: context,
     courseCount: syncedCourses.length,
     failedCourses,
+    plannerItems,
     courses: syncedCourses,
   };
 
