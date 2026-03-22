@@ -46,32 +46,55 @@ function buildFriendlyError(status, payload) {
 }
 
 export async function askDevStral(prompt) {
-  const response = await fetch(PROXY_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Extension-Secret": EXTENSION_SECRET,
-    },
-    body: JSON.stringify({
-      contents: [
-        {
-          role: "user",
-          parts: [{ text: trimPrompt(prompt) }],
-        },
-      ],
-      generationConfig: {
-        maxOutputTokens: 768,
-        temperature: 0.2,
-      },
-    }),
-  });
+  const payload = {
+    contents: [
+      {
+        role: 'user',
+        parts: [{ text: prompt }]
+      }
+    ]
+  };
 
-  const data = await parseProxyResponse(response);
-  if (!response.ok) {
-    throw buildFriendlyError(response.status, data);
+  // Retry once on 429 using Retry-After when available.
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const response = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Extension-Secret': EXTENSION_SECRET,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const retryAfterHeader = response.headers.get('Retry-After');
+    const retryAfterSeconds = Number.parseInt(retryAfterHeader || '', 10);
+    let data = null;
+
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
+    }
+
+    if (response.ok) {
+      console.log('Gemini response:', data);
+      return data?.candidates?.[0]?.content?.parts?.[0]?.text || 'No response returned.';
+    }
+
+    if (response.status === 429 && attempt === 0) {
+      const waitMs = Number.isFinite(retryAfterSeconds)
+        ? Math.max(retryAfterSeconds * 1000, 1200)
+        : 1500;
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+      continue;
+    }
+
+    const detail = data?.error?.message || data?.detail || `HTTP error ${response.status}`;
+    if (response.status === 429) {
+      throw new Error('Rate limit reached (429). Please wait a bit and try again. ' + detail);
+    }
+    throw new Error(detail);
   }
 
-  console.log("Gemini response:", data);
-
-  return data?.candidates?.[0]?.content?.parts?.[0]?.text || "No response returned.";
+  throw new Error('Request failed after retry.');
 }

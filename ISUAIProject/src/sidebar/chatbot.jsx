@@ -4,29 +4,41 @@ import { askDevStral } from "../services/openrouter.js";
 import { buildMinimalCanvasPromptContext } from "./canvasContext.js";
 import { isLikelyCanvasQuestion } from "./canvasKnowledge.js";
 import cyclonesLogo from "../assets/iowa_state_cyclones_logo_secondary_20088357.png";
+import settingsIcon from "../assets/black-settings-button.png";
 
-function buildCanvasPrompt(question, canvasContext) {
-  return [
-    "You are CyAI, an academic assistant.",
-    "Use the Canvas context below as the source of truth for course-specific facts.",
-    "Answer briefly and directly.",
-    "If the context does not contain the answer, say it is not found in synced Canvas data and suggest refreshing sync.",
-    "",
-    "CANVAS CONTEXT",
-    canvasContext.contextText,
-    "",
-    "USER QUESTION",
-    question,
-  ].join("\n");
-}
-
-export default function Chatbot() {
+export default function Chatbot({
+  quickActions = [],
+  syncAction = null,
+  isDarkMode = false,
+  onToggleDarkMode = () => {},
+  onOpenSettings = () => {},
+}) {
   const [messages, setMessages] = useState([
-    { role: "assistant", content: "Hello! I'm CyAI. How can I help you today?" }
+    { role: "assistant", content: "Hi, I'm your canvas virtual agent. Let me know how I can help you today." }
   ]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const messagesEndRef = useRef(null);
+
+  async function handleQuickAction(action) {
+    if (!action || action.disabled || typeof action.onClick !== "function") return;
+
+    try {
+      const result = await action.onClick();
+      const assistantText = typeof action.toAgentMessage === "function"
+        ? action.toAgentMessage(result)
+        : action.agentMessage;
+
+      if (assistantText) {
+        setMessages((prev) => [...prev, { role: "assistant", content: assistantText }]);
+      }
+    } catch (error) {
+      setMessages((prev) => [
+        ...prev,
+        { role: "assistant", content: `I hit an issue running that action: ${error.message || String(error)}` },
+      ]);
+    }
+  }
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -74,7 +86,34 @@ export default function Chatbot() {
   }
 
   return (
-    <div className="chatbot">
+    <div className="chatbot chatbot--cyai">
+      <div className="cyai-header">
+        <div className="cyai-title-wrap">
+          <img src={cyclonesLogo} alt="CyAI" className="cyai-title-avatar" />
+          <span className="cyai-title">CyAI</span>
+        </div>
+        <div className="cyai-header-actions">
+          <button
+            type="button"
+            className="cyai-header-button"
+            onClick={onToggleDarkMode}
+            title="Toggle dark mode"
+            aria-label="Toggle dark mode"
+          >
+            {isDarkMode ? "☀️" : "🌙"}
+          </button>
+          <button
+            type="button"
+            className="cyai-header-button cyai-settings-button"
+            onClick={onOpenSettings}
+            title="Settings"
+            aria-label="Open settings"
+          >
+            <img src={settingsIcon} alt="Settings" />
+          </button>
+        </div>
+      </div>
+
       <div className="messages-container">
         <div className="messages">
           {messages.map((m, idx) => (
@@ -103,18 +142,49 @@ export default function Chatbot() {
         </div>
       </div>
 
-      <div className="input-area">
-        <input
-          type="text"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && handleAskAI()}
-          placeholder="Ask me anything..."
-          disabled={loading}
-        />
-        <button onClick={handleAskAI} disabled={loading || !input.trim()} className="send-button">
-          {loading ? "..." : "->"}
-        </button>
+      <div className="chat-composer">
+        {quickActions.length > 0 && (
+          <div className="suggested-actions" role="group" aria-label="Suggested actions">
+            {quickActions.map((action, idx) => (
+              <button
+                key={idx}
+                type="button"
+                className="suggestion-chip"
+                onClick={() => handleQuickAction(action)}
+                disabled={action.disabled}
+              >
+                {action.label}
+              </button>
+            ))}
+          </div>
+        )}
+
+        <div className="input-area">
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleAskAI()}
+            placeholder="Ask me anything..."
+            disabled={loading}
+          />
+          <button onClick={handleAskAI} disabled={loading || !input.trim()} className="send-button">
+            {loading ? "..." : "->"}
+          </button>
+        </div>
+
+        {syncAction && (
+          <div className="sync-row">
+            <button
+              type="button"
+              className="sync-mini-button"
+              onClick={syncAction.onClick}
+              disabled={syncAction.disabled}
+            >
+              {syncAction.label}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
