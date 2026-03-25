@@ -3,7 +3,7 @@
   "name": "CyAI",
   "version": "1.0",
   "description": "AI-powered sidebar for Canvas LMS",
-  "permissions": ["storage", "activeTab", "scripting"],
+  "permissions": ["storage", "activeTab"],
   "host_permissions": ["https://canvas.iastate.edu/*", "https://gemini-proxy.cyai.workers.dev/*"],
   "background": {
     "service_worker": "assets/background.js"
